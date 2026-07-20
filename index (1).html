@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nocturne — where the piano lives</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#15120e; --surface:#1e1a14; --surface-2:#26201a;
+    --line:rgba(240,235,225,.08); --line-2:rgba(240,235,225,.15);
+    --text:#f1ece2; --text-2:#bdb2a1; --text-3:#8c8273;
+    --gold:#c9a75e; --gold-soft:#dcc188; --garnet:#7a2f2f;
+    --r:14px;
+    --kw:54px; --bw:32px; --kh:212px; --bh:132px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+
+  .topbar{position:sticky;top:0;z-index:30;height:54px;display:flex;align-items:center;justify-content:center;
+    background:rgba(21,18,14,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .topbar .mark{font-family:"Playfair Display",serif;font-weight:600;font-size:1.18rem;letter-spacing:.01em}
+  @media(min-width:860px){.topbar{display:none}}
+
+  .app{max-width:760px;margin:0 auto;padding:8px 20px 100px}
+  @media(min-width:860px){.app{padding-bottom:48px}}
+  .page{animation:fade .35s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hidden{display:none}
+
+  /* nav: bottom bar (mobile) / top bar (desktop) */
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;align-items:stretch;
+    background:rgba(18,15,11,.95);backdrop-filter:blur(16px);border-top:1px solid var(--line);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+  .wordmark{display:none}
+  .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:none;cursor:pointer;
+    color:var(--text-3);padding:8px 2px 6px;font-size:.6rem;font-weight:500;letter-spacing:.01em;transition:color .2s}
+  .tab svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.5}
+  .tab.on{color:var(--gold)}
+  .tab:active{color:var(--gold-soft)}
+  .tab:focus-visible{outline:2px solid var(--gold);outline-offset:-3px;border-radius:8px}
+  @media(min-width:860px){
+    .tabbar{position:sticky;top:0;bottom:auto;justify-content:flex-end;align-items:center;gap:4px;
+      border-top:none;border-bottom:1px solid var(--line);padding:10px 4px}
+    .wordmark{display:flex;align-items:center;gap:9px;margin-right:auto;font-family:"Playfair Display",serif;font-weight:600;font-size:1.3rem}
+    .wordmark .fleur{width:7px;height:7px;background:var(--gold)}
+    .tab{flex:0 0 auto;flex-direction:row;gap:8px;font-size:.82rem;padding:9px 14px;border-radius:9px}
+    .tab svg{width:17px;height:17px}
+    .tab.on{color:var(--gold);background:rgba(201,167,94,.1)}
+  }
+
+  /* hero */
+  .hero{text-align:center;padding:44px 0 26px}
+  .eyebrow{font-size:.7rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+  .hero h1{font-family:"Playfair Display",serif;font-weight:800;font-size:clamp(2.5rem,9vw,4.4rem);line-height:1.05;letter-spacing:-.01em}
+  .hero .sub{font-size:1.06rem;color:var(--text-2);max-width:440px;margin:14px auto 0}
+  .hero-keys{display:flex;justify-content:center;margin:34px auto 4px;width:max-content;max-width:100%;filter:drop-shadow(0 14px 26px rgba(0,0,0,.5))}
+  .hk{position:relative;display:flex}
+  .wk{width:34px;height:120px;background:linear-gradient(180deg,#f4efe3,#e2d7c1);border:1px solid #cabfa6;border-top:none;border-radius:0 0 6px 6px;cursor:pointer;transition:transform .08s,background .12s;box-shadow:inset 0 -5px 8px rgba(120,95,55,.14)}
+  .wk.dn,.wk:active{transform:translateY(2px);background:linear-gradient(180deg,#f2e6c8,var(--gold-soft))}
+  .bk{width:20px;height:74px;position:absolute;top:0;z-index:2;border-radius:0 0 4px 4px;background:linear-gradient(180deg,#2b2319,#0d0a07);cursor:pointer;transition:transform .08s;box-shadow:0 5px 7px rgba(0,0,0,.5)}
+  .bk.dn,.bk:active{transform:translateY(2px);background:linear-gradient(180deg,var(--gold),#241a10)}
+  .hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px}
+
+  .btn{font-family:inherit;font-weight:600;font-size:.9rem;border:none;border-radius:999px;padding:0 26px;min-height:48px;cursor:pointer;
+    background:var(--gold);color:#221a0c;transition:transform .12s,filter .2s}
+  .btn:hover{filter:brightness(1.06)}
+  .btn:active{transform:scale(.97)}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line-2)}
+  .btn.ghost:hover{border-color:var(--gold);color:var(--gold-soft)}
+  .btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  .rule{display:flex;align-items:center;gap:14px;margin:44px 0 20px}
+  .rule::before,.rule::after{content:"";flex:1;height:1px;background:var(--line)}
+  .fleur{width:6px;height:6px;transform:rotate(45deg);background:var(--gold);opacity:.85;flex:0 0 auto}
+  .kicker{font-size:.68rem;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:var(--gold);text-align:center}
+
+  .cards{display:grid;grid-template-columns:1fr;gap:12px;margin-top:22px}
+  @media(min-width:620px){.cards{grid-template-columns:1fr 1fr}}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;transition:border-color .25s}
+  .card:hover{border-color:var(--line-2)}
+  .card .num{font-family:"Playfair Display",serif;font-weight:800;font-size:1.05rem;color:var(--gold);opacity:.55;margin-bottom:8px}
+  .card h3{font-family:"Playfair Display",serif;font-weight:600;font-size:1.3rem;margin-bottom:6px}
+  .card h3 em{font-style:italic;color:var(--gold-soft)}
+  .card p{font-size:.98rem;color:var(--text-2);line-height:1.55}
+
+  .quote{margin:40px 0;padding:22px 24px;background:var(--surface);border-left:3px solid var(--gold);border-radius:0 var(--r) var(--r) 0}
+  .quote p{font-family:"Playfair Display",serif;font-style:italic;font-size:1.22rem;line-height:1.5;margin-bottom:10px}
+  .quote cite{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-style:normal}
+
+  footer{padding:38px 0 8px;text-align:center;border-top:1px solid var(--line);margin-top:36px}
+  footer p{font-size:.74rem;letter-spacing:.05em;color:var(--text-3)}
+
+  .chapter{padding:26px 0 8px}
+  .chapter .kicker{text-align:left}
+  .chapter h2{font-family:"Playfair Display",serif;font-weight:700;font-size:clamp(1.9rem,6vw,2.6rem);margin:12px 0 14px}
+  .chapter h2 em{font-style:italic;color:var(--gold-soft)}
+  .chapter .lead{font-size:1.1rem;color:var(--text-2);max-width:620px;margin-bottom:20px;line-height:1.65}
+  .soon-badge{display:inline-block;font-size:.62rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);border:1px solid var(--line-2);padding:8px 14px;border-radius:999px}
+  .kb-sub{font-size:1.02rem;color:var(--text-2);margin-bottom:20px}
+
+  .eras{display:flex;gap:9px;overflow-x:auto;padding:2px 0 16px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .eras::-webkit-scrollbar{display:none}
+  .era-btn{flex:0 0 auto;min-width:134px;text-align:left;cursor:pointer;border-radius:12px;padding:12px 14px;
+    background:var(--surface);border:1px solid var(--line);color:var(--text);transition:border-color .2s,background .2s}
+  .era-btn .en{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px}
+  .era-btn .ey{display:block;font-size:.66rem;letter-spacing:.05em;color:var(--text-3);margin-top:4px}
+  .era-btn.on{border-color:var(--eb);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--eb)}
+  .era-btn .sw{width:9px;height:9px;border-radius:50%;background:var(--eb);flex:0 0 auto}
+
+  .kb-tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:2px 0 18px}
+  .kb-toggle{display:inline-flex;align-items:center;gap:8px;font-size:.82rem;color:var(--text-2);background:var(--surface);
+    border:1px solid var(--line);padding:0 14px;min-height:44px;border-radius:10px;cursor:pointer;user-select:none}
+  .kb-toggle input{accent-color:var(--gold);width:16px;height:16px}
+  .kb-name-wrap{font-size:.82rem;color:var(--text-3);margin-left:auto}
+  .kb-name-wrap b{color:var(--gold-soft);font-weight:600}
+
+  .kb-panel{background:linear-gradient(180deg,#141009,#1c1710);border:1px solid var(--line);border-radius:16px;padding:14px 12px 18px;box-shadow:0 18px 40px rgba(0,0,0,.45)}
+  .felt{height:6px;border-radius:3px;background:var(--garnet);opacity:.8;margin-bottom:12px}
+  .kb-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;direction:ltr;padding-bottom:4px}
+  .kb{position:relative;display:flex;width:max-content;margin:0 auto;height:var(--kh);touch-action:none;user-select:none}
+  .wkey{width:var(--kw);height:var(--kh);background:linear-gradient(180deg,#f5f0e4,#e0d5bf);border:1px solid #c7bca3;border-top:none;border-radius:0 0 7px 7px;position:relative;cursor:pointer;box-shadow:inset 0 -6px 9px rgba(120,95,55,.14)}
+  .wkey.active{background:linear-gradient(180deg,#f3e7c9,var(--era))}
+  .bkey{width:var(--bw);height:var(--bh);position:absolute;top:0;z-index:3;border-radius:0 0 5px 5px;background:linear-gradient(180deg,#2b2319,#0c0906);cursor:pointer;box-shadow:0 6px 8px rgba(0,0,0,.5)}
+  .bkey.active{background:linear-gradient(180deg,var(--era),#241a10)}
+  .klabel{position:absolute;bottom:8px;left:0;right:0;text-align:center;font-size:.6rem;color:#9a8b6f;pointer-events:none}
+  .bkey .klabel{bottom:6px;color:#c6b99e}
+  .kb-hint{text-align:center;color:var(--text-3);font-size:.82rem;margin-top:12px}
+  .kb-hint b{color:var(--text-2);font-weight:600}
+
+  .ear-panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px 20px;text-align:center;margin-bottom:18px}
+  .ear-title{font-family:"Playfair Display",serif;font-weight:600;font-size:1.35rem;margin-bottom:2px}
+  .ear-dots{display:flex;gap:9px;justify-content:center;margin:16px 0;min-height:15px}
+  .ear-dots span{width:13px;height:13px;border-radius:50%;background:rgba(240,235,225,.08);border:1px solid var(--line-2);transition:background .2s}
+  .ear-dots span.f{background:var(--gold);border-color:var(--gold)}
+  .ear-dots span.g{background:#6fae74;border-color:#6fae74}
+  .ear-dots span.b{background:#b45447;border-color:#b45447}
+  .ear-verdict{min-height:26px;font-family:"Playfair Display",serif;font-style:italic;font-size:1.1rem;color:var(--text-2)}
+  .ear-verdict.g{color:#8ec48a}.ear-verdict.b{color:#cf9084}
+  .ear-ctrls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:6px}
+  .ear-len{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text-3)}
+  .ear-len select{background:var(--surface-2);color:var(--text);border:1px solid var(--line-2);border-radius:8px;padding:0 10px;min-height:44px;font-family:inherit}
+  .ear-stat{font-size:.78rem;color:var(--text-3)}
+  .ear-stat b{color:var(--gold-soft);font-weight:600}
+
+  /* polish */
+  .hero{position:relative;z-index:0}
+  .hero::before{content:"";position:absolute;left:50%;top:-30px;width:540px;max-width:130%;height:340px;transform:translateX(-50%);z-index:-1;pointer-events:none;background:radial-gradient(ellipse at center,rgba(201,167,94,.15),transparent 70%);filter:blur(4px)}
+  .card{transition:border-color .25s,transform .2s}
+  .card[role="button"]{cursor:pointer;position:relative}
+  .card[role="button"]:hover{transform:translateY(-2px)}
+  .card[role="button"]:active{transform:translateY(0)}
+  .card[role="button"]:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .card[role="button"]::after{content:"\2192";position:absolute;top:18px;right:18px;color:var(--gold);opacity:.45;transition:transform .2s,opacity .2s}
+  .card[role="button"]:hover::after{opacity:1;transform:translateX(3px)}
+  /* history (Part 4) */
+  .tl-head{font-family:"Playfair Display",serif;font-weight:600;font-size:1.4rem;margin:32px 0 12px}
+  .inst-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
+  @media(min-width:620px){.inst-grid{grid-template-columns:1fr 1fr}}
+  .inst{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--ic);border-radius:var(--r);padding:18px;display:flex;flex-direction:column;gap:5px}
+  .inst .in-name{font-family:"Playfair Display",serif;font-weight:600;font-size:1.15rem}
+  .inst .in-era{font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+  .inst p{font-size:.92rem;color:var(--text-2);line-height:1.5;margin:3px 0 8px}
+  .hear{align-self:flex-start;display:inline-flex;align-items:center;gap:9px;background:transparent;border:1px solid var(--line-2);color:var(--text);border-radius:999px;padding:0 16px;min-height:40px;cursor:pointer;font-family:inherit;font-size:.82rem;font-weight:600;transition:border-color .2s,color .2s,transform .1s}
+  .hear:hover,.hear.playing{border-color:var(--ic);color:var(--ic)}
+  .hear:active{transform:scale(.97)}
+  .hear .play{width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+  .tl{position:relative;margin-top:6px;padding-left:26px}
+  .tl::before{content:"";position:absolute;left:6px;top:8px;bottom:8px;width:1px;background:var(--line-2)}
+  .tl-item{position:relative;padding-bottom:24px}
+  .tl-item::before{content:"";position:absolute;left:-25px;top:5px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:2px solid var(--gold)}
+  .tl-year{font-family:"Playfair Display",serif;font-weight:700;color:var(--gold);font-size:1.02rem}
+  .tl-item h4{font-family:"Playfair Display",serif;font-weight:600;font-size:1.12rem;margin:2px 0 4px}
+  .tl-item p{font-size:.95rem;color:var(--text-2);line-height:1.55}
+  /* home — mindset surface (Part: Home v2) */
+  .home{max-width:520px;margin:0 auto;padding:26px 0 8px;text-align:center}
+  .h-greet{font-size:.78rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .h-title{font-family:"Playfair Display",serif;font-weight:800;font-size:clamp(2.6rem,10vw,4rem);line-height:1;margin-bottom:12px}
+  .h-sub{font-size:1.08rem;color:var(--text-2);max-width:420px;margin:0 auto 26px;line-height:1.55}
+  .tonight{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 22px;position:relative;overflow:hidden}
+  .tonight::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+  .t-label{font-size:.66rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:10px}
+  .t-name{font-family:"Playfair Display",serif;font-weight:700;font-size:1.6rem;line-height:1.1}
+  .t-era{font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin-top:4px}
+  .t-line{font-family:"Playfair Display",serif;font-style:italic;font-size:1.08rem;color:var(--text-2);margin:14px auto 20px;max-width:360px;line-height:1.5}
+  .t-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .ritual{margin:22px 0 2px;font-size:.9rem;color:var(--text-3)}
+  .h-quiet{background:none;border:none;color:var(--text-2);font-family:inherit;font-size:.92rem;cursor:pointer;padding:10px;margin-top:4px}
+  .h-quiet:hover{color:var(--gold-soft)}
+  .h-belong{font-size:.82rem;color:var(--text-3);margin-top:20px;font-style:italic}
+  .play{width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent;display:inline-block}
+  .btn.playing{filter:brightness(1.08)}
+  .persona{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(12,10,7,.72);backdrop-filter:blur(8px);animation:fade .3s ease both}
+  .persona-card{background:var(--surface-2);border:1px solid var(--line-2);border-radius:20px;padding:28px 24px;max-width:380px;width:100%;text-align:center}
+  .p-q{font-family:"Playfair Display",serif;font-weight:600;font-size:1.5rem;line-height:1.25;margin-bottom:20px}
+  .p-opts{display:flex;flex-direction:column;gap:10px}
+  .p-opts button{background:var(--surface);border:1px solid var(--line-2);color:var(--text);font-family:inherit;font-size:1rem;padding:0 18px;min-height:52px;border-radius:12px;cursor:pointer;transition:border-color .2s,background .2s}
+  .p-opts button:hover{border-color:var(--gold);background:rgba(201,167,94,.06)}
+  .p-skip{background:none;border:none;color:var(--text-3);font-family:inherit;font-size:.85rem;margin-top:16px;cursor:pointer}
+  .p-skip:hover{color:var(--text-2)}
+  /* pianists (Part 5) */
+  .pia-search{width:100%;background:var(--surface);border:1px solid var(--line-2);color:var(--text);border-radius:12px;padding:0 16px;min-height:48px;font-family:inherit;font-size:1rem;margin-bottom:12px}
+  .pia-search::placeholder{color:var(--text-3)}
+  .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;background:var(--surface);border:1px solid var(--line);color:var(--text-2);border-radius:999px;padding:0 15px;min-height:38px;cursor:pointer;font-family:inherit;font-size:.82rem;white-space:nowrap;transition:color .2s,border-color .2s,box-shadow .2s}
+  .chip.on{color:var(--text);border-color:var(--pc,var(--gold));box-shadow:inset 0 0 0 1px var(--pc,var(--gold))}
+  .pia-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media(min-width:620px){.pia-grid{grid-template-columns:1fr 1fr 1fr}}
+  .pia-card{text-align:left;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--pc,var(--gold));border-radius:12px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:4px;transition:transform .15s,border-color .2s;font-family:inherit}
+  .pia-card:hover{transform:translateY(-2px)}
+  .pc-name{font-family:"Playfair Display",serif;font-weight:600;font-size:1.02rem;color:var(--text);line-height:1.15}
+  .pc-era{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+  .pia-empty{color:var(--text-3);text-align:center;padding:30px 0}
+  .pia-back{background:none;border:none;color:var(--text-2);font-family:inherit;font-size:.9rem;cursor:pointer;padding:6px 0;margin-bottom:8px}
+  .pia-back:hover{color:var(--gold-soft)}
+  .pia-hero{display:flex;gap:16px;align-items:center;justify-content:space-between;border-left:3px solid var(--pc,var(--gold));background:var(--surface);border-radius:14px;padding:18px}
+  .ph-name{font-family:"Playfair Display",serif;font-weight:700;font-size:1.5rem;line-height:1.1;margin-top:2px}
+  .ph-img{width:76px;height:76px;flex:0 0 auto;border-radius:50%;background:var(--surface-2) center/cover no-repeat;border:1px solid var(--line-2)}
+  .ph-extract{font-size:1.02rem;color:var(--text-2);line-height:1.65;margin:18px 0}
+  .ph-src{display:inline-block;font-size:.78rem;color:var(--gold);text-decoration:none;border-bottom:1px solid var(--line-2);padding-bottom:2px;margin-top:2px}
+  .ph-src:hover{color:var(--gold-soft)}
+  /* pianist detail v2 */
+  .pia-count{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);margin:0 0 10px}
+  .pia-hero{align-items:flex-start}
+  .ph-img{width:92px;height:116px;border-radius:10px;background:var(--surface-2) center/cover no-repeat;border:1px solid var(--line-2);flex:0 0 auto;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-family:"Playfair Display",serif;font-size:1.7rem;font-weight:700}
+  .ph-img.has{border-color:var(--pc,var(--gold));color:transparent}
+  .ph-txt{flex:1;min-width:0}
+  .ph-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+  .ph-chip{font-size:.58rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--pc,var(--gold));border:1px solid var(--line-2);border-radius:999px;padding:3px 9px}
+  .ph-chip.alt{color:var(--text-3)}
+  .ph-years{font-size:.82rem;color:var(--text-3);margin-top:8px}
+  .ph-extract p{font-size:1rem;color:var(--text-2);line-height:1.7;margin:0 0 12px}
+  @media(max-width:600px){:root{--kw:48px;--bw:30px;--kh:190px;--bh:118px}}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="topbar"><span class="mark">Nocturne</span></header>
+
+<div class="app">
+  <!-- HOME -->
+  <div id="home" class="page"></div>
+
+  <!-- OTHER CHAPTERS (built in the next parts) -->
+  <div id="history" class="page hidden"><div class="chapter">
+    <div class="kicker" style="text-align:left">The Story</div>
+    <h2>Three Centuries of <em>Piano</em></h2>
+    <p class="kb-sub">From Cristofori's first hammers to the digital age — and you can hear every instrument along the way.</p>
+    <div id="hist-inst"></div>
+    <h3 class="tl-head">The Timeline</h3>
+    <div id="hist-tl"></div>
+  </div></div>
+  <div id="pianists" class="page hidden"><div class="chapter">
+    <div class="kicker" style="text-align:left">The Legends</div>
+    <h2>Pianists <em>&amp; Composers</em></h2>
+    <p class="kb-sub">Everyone here plays by ear in the end. Tap a name for their story — and try a phrase in their spirit.</p>
+    <div id="pia-controls"></div>
+    <div id="pia-list"></div>
+    <div id="pia-detail" class="hidden"></div>
+  </div></div>
+  <div id="keyboard" class="page hidden"><div class="chapter" style="padding-top:56px">
+    <div class="kicker" style="text-align:left">The Instrument</div>
+    <h2>The <em>Keyboard</em></h2>
+    <p class="kb-sub">Choose an era — the voice and the finish of the keys change with it.</p>
+    <div id="era-switch" class="eras"></div>
+    <div id="kb-tools" class="kb-tools"></div>
+    <div id="kb-mount"></div>
+  </div></div>
+  <div id="learn" class="page hidden"><div class="chapter"><span class="soon-badge">Chapter · Opening next</span><div class="kicker" style="margin-top:22px">The Path</div><h2>Learn by <em>Ear</em></h2><p class="lead">From a single note to real fluency — a course that trains the ear before the page, for anyone who plays by feel, by listening, or by watching.</p></div></div>
+  <div id="ear" class="page hidden"><div class="chapter" style="padding-top:56px">
+    <div class="kicker" style="text-align:left">The Core</div>
+    <h2>Play by <em>Ear</em></h2>
+    <p class="kb-sub">Hear a phrase, then play it back on the keys. No notation — only your ear.</p>
+    <div id="ear-panel" class="ear-panel"></div>
+    <div id="ear-era" class="eras"></div>
+    <div id="ear-mount"></div>
+  </div></div>
+</div>
+
+<!-- BOTTOM NAV (mobile) / TOP NAV (desktop) -->
+<div class="tabbar" id="tabbar">
+  <div class="wordmark"><span class="fleur"></span>Nocturne</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
+<script>
+"use strict";
+/* ---------- navigation ---------- */
+var TABS=[
+ {id:'home',l:'Home',ic:'M4 11l8-7 8 7M6 9v10h12V9'},
+ {id:'history',l:'History',ic:'M12 7v5l3 2M12 4a8 8 0 100 16 8 8 0 000-16z'},
+ {id:'pianists',l:'Legends',ic:'M12 12a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM5 20a7 7 0 0114 0'},
+ {id:'keyboard',l:'Keys',ic:'M4 6h16v12H4zM8 6v8M12 6v8M16 6v8'},
+ {id:'learn',l:'Learn',ic:'M4 5h9a3 3 0 013 3v11a3 3 0 00-3-3H4zM20 5h-1a3 3 0 00-3 3v8'},
+ {id:'ear',l:'By Ear',ic:'M9 8a3 3 0 116 0c0 2-2 3-3 4.5S9 15 9 17M12 20h.01'}
+];
+var current='home';
+var tabbar=document.getElementById('tabbar');
+TABS.forEach(function(t){
+  var b=document.createElement('button');b.className='tab'+(t.id==='home'?' on':'');b.dataset.id=t.id;
+  b.innerHTML='<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="'+t.ic+'"/></svg><span>'+t.l+'</span>';
+  b.addEventListener('click',function(){go(t.id);});
+  tabbar.appendChild(b);
+});
+function go(id){
+  current=id;
+  document.querySelectorAll('.page').forEach(function(p){p.classList.toggle('hidden',p.id!==id);});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('on',t.dataset.id===id);});
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-go]').forEach(function(el){el.addEventListener('click',function(){go(el.dataset.go);});el.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go(el.dataset.go);}});});
+
+/* ---------- hero keys: tap to hear (tiny synth teaser) ---------- */
+var AC=null;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();return AC;}
+function tone(freq){
+  var c=ac();if(!c)return;var now=c.currentTime;
+  var o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();
+  o.type='triangle';o2.type='triangle';o.frequency.value=freq;o2.frequency.value=freq;o2.detune.value=6;
+  lp.type='lowpass';lp.frequency.value=2600;o.connect(lp);o2.connect(lp);lp.connect(g);g.connect(c.destination);
+  g.gain.setValueAtTime(0.0001,now);g.gain.exponentialRampToValueAtTime(0.26,now+0.01);g.gain.exponentialRampToValueAtTime(0.0001,now+1.6);
+  o.start(now);o2.start(now);o.stop(now+1.7);o2.stop(now+1.7);
+}
+/* build a small 2-octave-ish motif keyboard: C D E F G A B C D E */
+/* hero mini-keyboard removed for the new Home */
+
+/* unlock audio on first user gesture (mobile & Safari require this) */
+function unlockAudio(){var c=ac();if(!c)return;try{var b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);}catch(e){}}
+['pointerdown','touchend','click','keydown'].forEach(function(ev){document.addEventListener(ev,unlockAudio,{once:true});});
+
+/* ===================== Part 2: full keyboard ===================== */
+var ERAS=[
+ {id:'harpsichord',name:'Harpsichord',era:'Baroque · 1600–1750',gm:'harpsichord',color:'#8fa07a',wave:'sawtooth',decay:0.9,cut:4200,hold:false},
+ {id:'fortepiano',name:'Fortepiano',era:'Classical · 1750–1820',gm:'bright_acoustic_piano',color:'#d8b26a',wave:'triangle',decay:1.7,cut:3200,hold:false},
+ {id:'grand',name:'Grand Piano',era:'Romantic · 1820–1900',gm:'acoustic_grand_piano',color:'#c9a24c',wave:'triangle',decay:2.4,cut:2600,hold:false},
+ {id:'upright',name:'Upright',era:'Modern · 1900–1950',gm:'honkytonk_piano',color:'#c1824c',wave:'triangle',decay:1.8,cut:2200,hold:false},
+ {id:'rhodes',name:'Rhodes',era:'Electric · 1950–1980',gm:'electric_piano_1',color:'#cf7a44',wave:'sine',decay:2.6,cut:1900,hold:false},
+ {id:'synth',name:'Synthesizer',era:'Digital · 1980–Now',gm:'lead_2_sawtooth',color:'#9a86c4',wave:'sawtooth',decay:0.3,cut:1600,hold:true}
+];
+var curEra=ERAS[2],labelsOn=true,sustainOn=true,kbBuilt=false;
+var NOTE={C:0,'C#':1,D:2,'D#':3,E:4,F:5,'F#':6,G:7,'G#':8,A:9,'A#':10,B:11};
+function n2f(n){var m=n.match(/^([A-G]#?)(\d)$/);if(!m)return 440;var s=NOTE[m[1]]+(+m[2])*12,a=NOTE.A+48;return 440*Math.pow(2,(s-a)/12);}
+var sf={},sfLoad={};
+function loadEra(gm){if(!window.Soundfont||sf[gm]||sfLoad[gm])return;var c=ac();if(!c)return;sfLoad[gm]=true;Soundfont.instrument(c,gm,{soundfont:'MusyngKite'}).then(function(i){sf[gm]=i;}).catch(function(){});}
+function esynth(note,era){
+ var c=ac();if(!c)return{stop:function(){}};var now=c.currentTime,f=n2f(note);
+ var o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),lp=c.createBiquadFilter();
+ o.type=era.wave;o2.type=era.wave;o.frequency.value=f;o2.frequency.value=f;o2.detune.value=7;
+ lp.type='lowpass';lp.frequency.value=era.cut;o.connect(lp);o2.connect(lp);lp.connect(g);g.connect(c.destination);
+ g.gain.setValueAtTime(0.0001,now);g.gain.exponentialRampToValueAtTime(0.3,now+0.008);
+ if(!era.hold){g.gain.exponentialRampToValueAtTime(0.0001,now+era.decay);o.stop(now+era.decay+0.1);o2.stop(now+era.decay+0.1);}
+ o.start(now);o2.start(now);
+ return{stop:function(){var t=c.currentTime;try{g.gain.cancelScheduledValues(t);g.gain.setValueAtTime(g.gain.value,t);g.gain.exponentialRampToValueAtTime(0.0001,t+0.25);o.stop(t+0.3);o2.stop(t+0.3);}catch(e){}}};
+}
+function playEra(note){var inst=sf[curEra.gm];if(inst){var nd;try{nd=inst.play(note,ac().currentTime,{gain:2.4});}catch(e){}return{stop:function(){try{nd&&nd.stop();}catch(e){}}};}loadEra(curEra.gm);return esynth(note,curEra);}
+
+var W=['C','D','E','F','G','A','B'],BA={C:'C#',D:'D#',F:'F#',G:'G#',A:'A#'};
+function mkKeys(o){var k=[];o.forEach(function(oc){W.forEach(function(w){k.push({n:w+oc,t:'w'});if(BA[w])k.push({n:BA[w]+oc,t:'b'});});});k.push({n:'C'+(o[o.length-1]+1),t:'w'});return k;}
+var KEYS=mkKeys([4,5]);
+var CODE={KeyA:'C4',KeyW:'C#4',KeyS:'D4',KeyE:'D#4',KeyD:'E4',KeyF:'F4',KeyT:'F#4',KeyG:'G4',KeyY:'G#4',KeyH:'A4',KeyU:'A#4',KeyJ:'B4',KeyK:'C5',KeyO:'C#5',KeyL:'D5',KeyP:'D#5',Semicolon:'E5',Quote:'F5',BracketRight:'G5'};
+var keyEls={},held={};
+function pressKey(n){var el=keyEls[n];if(el)el.classList.add('active');held[n]=playEra(n);}
+function releaseKey(n){var el=keyEls[n];if(el)el.classList.remove('active');if(!sustainOn&&!curEra.hold&&held[n]){held[n].stop();delete held[n];}}
+function setEraColor(){var kb=document.getElementById('kb');if(kb)kb.style.setProperty('--era',curEra.color);}
+function renderEraSwitch(){
+ var box=document.getElementById('era-switch');if(!box)return;box.innerHTML='';
+ ERAS.forEach(function(e){
+  var b=document.createElement('button');b.className='era-btn'+(e.id===curEra.id?' on':'');b.style.setProperty('--eb',e.color);
+  b.innerHTML='<span class="en"><span class="sw"></span>'+e.name+'</span><span class="ey">'+e.era+'</span>';
+  b.addEventListener('click',function(){curEra=e;loadEra(e.gm);renderEraSwitch();var nm=document.getElementById('kb-name');if(nm)nm.textContent=e.name;setEraColor();});
+  box.appendChild(b);
+ });
+}
+function renderTools(){
+ var t=document.getElementById('kb-tools');if(!t)return;t.innerHTML='';
+ function tog(lbl,val,fn){var l=document.createElement('label');l.className='kb-toggle';l.innerHTML='<input type="checkbox" '+(val?'checked':'')+'/> '+lbl;l.querySelector('input').addEventListener('change',function(e){fn(e.target.checked);});return l;}
+ t.appendChild(tog('Note names',labelsOn,function(v){labelsOn=v;buildKeyboard();}));
+ t.appendChild(tog('Sustain',sustainOn,function(v){sustainOn=v;}));
+ var s=document.createElement('span');s.className='kb-name-wrap';s.innerHTML='Voice: <b id="kb-name">'+curEra.name+'</b>';t.appendChild(s);
+}
+function buildKeyboard(){
+ var mount=document.getElementById('kb-mount');if(!mount)return;keyEls={};held={};
+ var panel=document.createElement('div');panel.className='kb-panel';
+ var felt=document.createElement('div');felt.className='felt';panel.appendChild(felt);
+ var scroll=document.createElement('div');scroll.className='kb-scroll';
+ var kb=document.createElement('div');kb.className='kb';kb.id='kb';kb.style.setProperty('--era',curEra.color);
+ var wi=0,pos={};KEYS.forEach(function(k){if(k.t==='w'){pos[k.n]=wi;wi++;}else pos[k.n]=wi;});
+ function mk(k){
+  var el=document.createElement('div');el.className=k.t==='w'?'wkey':'bkey';
+  if(k.t==='b')el.style.left='calc('+pos[k.n]+' * var(--kw) - var(--bw)/2)';
+  if(labelsOn){var s=document.createElement('span');s.className='klabel';s.textContent=k.n;el.appendChild(s);}
+  el.addEventListener('pointerdown',function(e){e.preventDefault();if(k.t==='b')e.stopPropagation();try{el.setPointerCapture(e.pointerId);}catch(x){}pressKey(k.n);});
+  el.addEventListener('pointerup',function(){releaseKey(k.n);});
+  el.addEventListener('pointercancel',function(){releaseKey(k.n);});
+  el.addEventListener('pointerleave',function(){if(held[k.n])releaseKey(k.n);});
+  keyEls[k.n]=el;return el;
+ }
+ KEYS.filter(function(k){return k.t==='w';}).forEach(function(k){kb.appendChild(mk(k));});
+ KEYS.filter(function(k){return k.t==='b';}).forEach(function(k){kb.appendChild(mk(k));});
+ scroll.appendChild(kb);panel.appendChild(scroll);
+ var hint=document.createElement('p');hint.className='kb-hint';hint.innerHTML='Play with mouse, touch, or your keyboard — <b>A S D F…</b> (white) · <b>W E</b> (black)';
+ mount.innerHTML='';mount.appendChild(panel);mount.appendChild(hint);
+}
+function ensureKeyboard(){if(kbBuilt)return;kbBuilt=true;renderEraSwitch();renderTools();buildKeyboard();loadEra(curEra.gm);}
+
+var _go=go;
+go=function(id){_go(id);if(id==='keyboard')ensureKeyboard();if(id==='ear')ensureEar();if(id==='history')ensureHistory();if(id==='home')renderHome();if(id==='pianists')ensurePianists();};
+window.addEventListener('keydown',function(e){if(current!=='keyboard'||e.repeat)return;var n=CODE[e.code];if(n){e.preventDefault();pressKey(n);}});
+window.addEventListener('keyup',function(e){if(current!=='keyboard')return;var n=CODE[e.code];if(n)releaseKey(n);});
+
+/* ===================== Part 3: Play by Ear ===================== */
+var earLen=3,earSeq=[],earInput=[],earPhase='idle',earVerdict=null,earStreak=0,earBest=0,earBuilt=false;
+var earKeyEls={},earHeld={};
+var EAR_POOL=['C4','D4','E4','F4','G4','A4','B4','C5'];
+function earFlash(n){var el=earKeyEls[n];if(!el)return;el.classList.add('active');setTimeout(function(){el.classList.remove('active');},280);}
+function earPlaySeq(s){s.forEach(function(nt,i){setTimeout(function(){earFlash(nt);playEra(nt);},i*560);});}
+function renderEarPanel(){
+ var p=document.getElementById('ear-panel');if(!p)return;
+ var title=earPhase==='idle'?'Ready when you are':earPhase==='listen'?'Now play it back':'Another round?';
+ var n=earPhase==='idle'?earLen:earSeq.length,dots='';
+ for(var i=0;i<n;i++){var c='';if(earInput[i]!==undefined)c=(earInput[i]===earSeq[i])?'g':(earVerdict===false?'b':'f');dots+='<span class="'+c+'"></span>';}
+ var vt=earVerdict===true?'Perfect. 🎯':earVerdict===false?('Close — it was: '+earSeq.join('  ')):'\u00A0';
+ var vc=earVerdict===true?'g':earVerdict===false?'b':'';
+ p.innerHTML='<div class="ear-title">'+title+'</div><div class="ear-dots">'+dots+'</div><div class="ear-verdict '+vc+'">'+vt+'</div>'+
+  '<div class="ear-ctrls"><button class="btn" id="ear-start">'+(earPhase==='idle'?'Play a phrase':'New phrase')+'</button>'+
+  ((earSeq.length&&earPhase!=='idle')?'<button class="btn ghost" id="ear-replay">Hear again</button>':'')+
+  '<span class="ear-len">Length<select id="ear-len"><option>2</option><option>3</option><option>4</option><option>5</option></select></span>'+
+  '<span class="ear-stat">Streak <b>'+earStreak+'</b> · Best <b>'+earBest+'</b></span></div>';
+ var sel=document.getElementById('ear-len');sel.value=String(earLen);sel.onchange=function(e){earLen=+e.target.value;};
+ document.getElementById('ear-start').onclick=function(){
+   var s=[];for(var i=0;i<earLen;i++)s.push(EAR_POOL[Math.floor(Math.random()*EAR_POOL.length)]);
+   earSeq=s;earInput=[];earVerdict=null;earPhase='listen';renderEarPanel();setTimeout(function(){earPlaySeq(s);},280);
+ };
+ var rp=document.getElementById('ear-replay');if(rp)rp.onclick=function(){if(earSeq.length)earPlaySeq(earSeq);};
+}
+function earOnNote(n){
+ if(earPhase!=='listen')return;earInput.push(n);
+ if(earInput.length===earSeq.length){var ok=earInput.every(function(x,i){return x===earSeq[i];});earVerdict=ok;earPhase='done';if(ok){earStreak++;if(earStreak>earBest)earBest=earStreak;}else earStreak=0;renderEarPanel();}
+}
+function buildEarKeyboard(){
+ var mount=document.getElementById('ear-mount');if(!mount)return;earKeyEls={};earHeld={};
+ var panel=document.createElement('div');panel.className='kb-panel';
+ var felt=document.createElement('div');felt.className='felt';panel.appendChild(felt);
+ var scroll=document.createElement('div');scroll.className='kb-scroll';
+ var kb=document.createElement('div');kb.className='kb';kb.id='ear-kb';kb.style.setProperty('--era',curEra.color);
+ var wi=0,pos={};KEYS.forEach(function(k){if(k.t==='w'){pos[k.n]=wi;wi++;}else pos[k.n]=wi;});
+ function stopN(k,el){el.classList.remove('active');if(earHeld[k]){try{earHeld[k].stop();}catch(e){}delete earHeld[k];}}
+ function mk(k){
+  var el=document.createElement('div');el.className=k.t==='w'?'wkey':'bkey';
+  if(k.t==='b')el.style.left='calc('+pos[k.n]+' * var(--kw) - var(--bw)/2)';
+  var s=document.createElement('span');s.className='klabel';s.textContent=k.n;el.appendChild(s);
+  el.addEventListener('pointerdown',function(e){e.preventDefault();if(k.t==='b')e.stopPropagation();try{el.setPointerCapture(e.pointerId);}catch(x){}el.classList.add('active');earHeld[k.n]=playEra(k.n);earOnNote(k.n);});
+  el.addEventListener('pointerup',function(){stopN(k.n,el);});
+  el.addEventListener('pointercancel',function(){stopN(k.n,el);});
+  el.addEventListener('pointerleave',function(){if(earHeld[k.n])stopN(k.n,el);});
+  earKeyEls[k.n]=el;return el;
+ }
+ KEYS.filter(function(k){return k.t==='w';}).forEach(function(k){kb.appendChild(mk(k));});
+ KEYS.filter(function(k){return k.t==='b';}).forEach(function(k){kb.appendChild(mk(k));});
+ scroll.appendChild(kb);panel.appendChild(scroll);
+ var hint=document.createElement('p');hint.className='kb-hint';hint.innerHTML='Listen, then reproduce the phrase on the keys above.';
+ mount.innerHTML='';mount.appendChild(panel);mount.appendChild(hint);
+}
+function renderEarEra(){
+ var box=document.getElementById('ear-era');if(!box)return;box.innerHTML='';
+ ERAS.forEach(function(e){
+  var b=document.createElement('button');b.className='era-btn'+(e.id===curEra.id?' on':'');b.style.setProperty('--eb',e.color);
+  b.innerHTML='<span class="en"><span class="sw"></span>'+e.name+'</span><span class="ey">'+e.era+'</span>';
+  b.addEventListener('click',function(){curEra=e;loadEra(e.gm);renderEarEra();var k=document.getElementById('ear-kb');if(k)k.style.setProperty('--era',e.color);});
+  box.appendChild(b);
+ });
+}
+function ensureEar(){if(earBuilt)return;earBuilt=true;renderEarPanel();renderEarEra();buildEarKeyboard();loadEra(curEra.gm);}
+
+/* ===================== Part 4: History ===================== */
+var MOTIFS={harpsichord:['C5','E5','G5','C6','G5','E5'],fortepiano:['G4','A4','B4','D5','C5'],grand:['C4','E4','G4','C5','E5'],upright:['E4','G4','C5','E5','C5','G4'],rhodes:['D4','F4','A4','C5','A4'],synth:['C4','G4','C5','G5','C5']};
+var INSTR_DESC={
+ harpsichord:"Plucks its strings — bright and even, unable to grow loud or soft. The piano's ancestor.",
+ fortepiano:"The first true piano: light and quick, and finally able to play both soft and loud. Mozart's instrument.",
+ grand:"The Romantic powerhouse — an iron frame and thick strings with a singing tone that fills a hall.",
+ upright:"The piano that moved into the home: compact, warm, and a little characterful.",
+ rhodes:"Electric keys with a bell-like shimmer — the voice of soul, jazz, and funk.",
+ synth:"Sound without strings — the digital age, where any timbre is possible."
+};
+var TIMELINE=[
+ ['~1700',"Cristofori's first piano","In Florence, Bartolomeo Cristofori builds the gravicembalo col piano e forte — a keyboard that could finally play soft and loud, using hammers instead of plucks."],
+ ['1730s',"It reaches Germany","Gottfried Silbermann builds his own versions and shows them to J. S. Bach, whose criticism of the heavy touch pushes makers to refine the design."],
+ ['1760s',"The square piano","Johannes Zumpe's compact square piano brings the instrument out of palaces and into ordinary homes across Europe."],
+ ['1770s',"The fortepiano flourishes","Stein and Walter perfect the light, clear Viennese action — the sound Mozart wrote for."],
+ ['1821',"The double escapement","Sebastien Erard's action lets a note repeat rapidly without fully releasing the key, making trills and fast passages possible."],
+ ['1825',"The iron frame","A full cast-iron frame lets the piano hold the huge tension of steel strings — more power, a richer tone, steadier tuning."],
+ ['1853',"Steinway & Sons","Founded in New York, Steinway drives decades of innovation that shape the modern concert grand."],
+ ['1880s',"88 keys become standard","The range settles at 88 keys, A0 to C8 — over seven octaves, the piano we know today."],
+ ['1980s',"The digital age","Sampling and MIDI arrive; the digital piano brings portability, silent practice, and endless new sounds."]
+];
+function voice(era,note){var inst=sf[era.gm];if(inst){try{inst.play(note,ac().currentTime,{gain:2.4});}catch(e){}return;}loadEra(era.gm);esynth(note,era);}
+function playMotif(era,btn){var m=MOTIFS[era.id]||['C4','E4','G4'];loadEra(era.gm);if(btn)btn.classList.add('playing');m.forEach(function(n,i){setTimeout(function(){voice(era,n);if(btn&&i===m.length-1)setTimeout(function(){btn.classList.remove('playing');},280);},i*300);});}
+var histBuilt=false;
+function ensureHistory(){
+ if(histBuilt)return;histBuilt=true;
+ var ig=document.getElementById('hist-inst');if(ig){var grid=document.createElement('div');grid.className='inst-grid';
+  ERAS.forEach(function(e){var c=document.createElement('div');c.className='inst';c.style.setProperty('--ic',e.color);
+   c.innerHTML='<span class="in-name">'+e.name+'</span><span class="in-era">'+e.era+'</span><p>'+INSTR_DESC[e.id]+'</p>';
+   var b=document.createElement('button');b.className='hear';b.innerHTML='<span class="play"></span> Hear it';
+   b.addEventListener('click',function(){playMotif(e,b);});c.appendChild(b);grid.appendChild(c);});
+  ig.appendChild(grid);}
+ var tl=document.getElementById('hist-tl');if(tl){var wrap=document.createElement('div');wrap.className='tl';
+  TIMELINE.forEach(function(t){var it=document.createElement('div');it.className='tl-item';
+   it.innerHTML='<div class="tl-year">'+t[0]+'</div><h4>'+t[1]+'</h4><p>'+t[2]+'</p>';wrap.appendChild(it);});
+  tl.appendChild(wrap);}
+}
+
+/* ===================== Home v2: mindset surface ===================== */
+var _mem={};
+var store={get:function(k){try{var v=localStorage.getItem('noct_'+k);return v===null?undefined:v;}catch(e){return _mem[k];}},
+           set:function(k,v){try{localStorage.setItem('noct_'+k,v);}catch(e){_mem[k]=v;}}};
+var LEGENDS=[
+ {name:"Ludwig van Beethoven",era:"Classical · Romantic",line:"He heard the whole storm in his head before his hands ever moved.",motif:['E5','D#5','E5','D#5','E5','B4','D5','C5','A4']},
+ {name:"Frédéric Chopin",era:"Romantic",line:"He made the piano sing — a melody floating over a whisper.",motif:['G4','B4','D5','G5','D5','B4']},
+ {name:"Johann Sebastian Bach",era:"Baroque",line:"Voices weaving into voices — math that somehow feels like longing.",motif:['C4','E4','G4','C5','G4','E4']},
+ {name:"Bill Evans",era:"Modern Jazz",line:"Floating chords, felt more than counted — played straight from the ear.",motif:['D4','F4','A4','C5','A4','F4']},
+ {name:"Herbie Hancock",era:"Jazz · Funk",line:"Acoustic one night, electric the next — always chasing the groove.",motif:['A4','C5','D5','E5','D5','C5']},
+ {name:"Sergei Rachmaninoff",era:"Late Romantic",line:"Huge hands, oceanic feeling — the piano at its most sweeping.",motif:['C4','G4','C5','E5','G5','E5']}
+];
+var PERSONA_SUB={
+ sound:'Tonight, just listen — and let your fingers wander when they’re ready.',
+ play:'Tonight, your hands already know the way.',
+ curious:'Tonight, follow your curiosity to the keys.',
+ better:'Tonight, one small phrase is all it takes.'
+};
+function greeting(){var h=new Date().getHours();return h<12?'Good morning':h<18?'Good afternoon':'Good evening';}
+function _dstr(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function updateRitual(){
+ var last=store.get('last'),streak=parseInt(store.get('streak')||'0',10)||0,t=_dstr(new Date());
+ if(last!==t){var y=new Date();y.setDate(y.getDate()-1);streak=(last===_dstr(y))?streak+1:1;store.set('streak',String(streak));store.set('last',t);}
+ return streak;
+}
+function renderHome(){
+ var el=document.getElementById('home');if(!el)return;
+ var persona=store.get('persona');
+ var lg=LEGENDS[new Date().getDate()%LEGENDS.length];
+ var streak=updateRitual();
+ var sub=PERSONA_SUB[persona]||'Tonight, there are no wrong notes — only the ones you haven’t found yet.';
+ var ritual=streak<=1?'Welcome. This is evening one.':('You’ve shown up '+streak+' evenings in a row.');
+ el.innerHTML='<div class="home"><div class="h-greet">'+greeting()+'</div><h1 class="h-title">Nocturne</h1>'
+  +'<p class="h-sub">'+sub+'</p>'
+  +'<div class="tonight"><div class="t-label">Tonight’s legend</div><div class="t-name">'+lg.name+'</div>'
+  +'<div class="t-era">'+lg.era+'</div><p class="t-line">'+lg.line+'</p>'
+  +'<div class="t-actions"><button class="btn" id="h-phrase"><span class="play"></span> Play their phrase</button>'
+  +'<button class="btn ghost" id="h-try">Try it by ear →</button></div></div>'
+  +'<div class="ritual">'+ritual+'</div>'
+  +'<button class="h-quiet" id="h-free">Or just play →</button>'
+  +'<p class="h-belong">You and every legend here do the same thing — play by ear.</p></div>';
+ document.getElementById('h-phrase').onclick=function(){var b=this;b.classList.add('playing');lg.motif.forEach(function(n,i){setTimeout(function(){voice(curEra,n);if(i===lg.motif.length-1)setTimeout(function(){b.classList.remove('playing');},280);},i*320);});};
+ document.getElementById('h-try').onclick=function(){go('ear');};
+ document.getElementById('h-free').onclick=function(){go('keyboard');};
+}
+function bootPersona(){
+ if(store.get('persona')){renderHome();return;}
+ var ov=document.createElement('div');ov.className='persona';
+ ov.innerHTML='<div class="persona-card"><div class="p-q">What brings you to the piano tonight?</div>'
+  +'<div class="p-opts"><button data-p="sound">I love the sound</button><button data-p="play">I play</button>'
+  +'<button data-p="curious">I’m curious</button><button data-p="better">I want to get better</button></div>'
+  +'<button class="p-skip" data-p="">Maybe later</button></div>';
+ document.body.appendChild(ov);
+ ov.querySelectorAll('[data-p]').forEach(function(b){b.onclick=function(){var p=b.getAttribute('data-p');if(p)store.set('persona',p);ov.remove();renderHome();};});
+}
+bootPersona();
+
+/* audio unlock: create + resume the AudioContext on the first user gesture (incl. iOS silent-buffer trick) */
+var _unlocked=false;
+function unlockAudio(){var c=ac();if(!c)return;if(c.state==='suspended'){c.resume();}if(!_unlocked){try{var b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);}catch(e){}_unlocked=true;}}
+document.addEventListener('pointerdown',unlockAudio);
+document.addEventListener('touchstart',unlockAudio,{passive:true});
+document.addEventListener('keydown',unlockAudio);
+
+/* ===================== Part 5: Pianists ===================== */
+var PERIODS={
+ baroque:{label:'Baroque',color:'#8fa07a',voice:'harpsichord'},classical:{label:'Classical',color:'#d8b26a',voice:'fortepiano'},
+ romantic:{label:'Romantic',color:'#c9a24c',voice:'grand'},impressionist:{label:'Impressionist',color:'#b98db0',voice:'grand'},
+ modern:{label:'Modern',color:'#c1824c',voice:'upright'},jazz:{label:'Jazz',color:'#cf7a44',voice:'rhodes'},contemporary:{label:'Contemporary',color:'#9a86c4',voice:'synth'}
+};
+var PHRASE={baroque:['C5','E5','G5','C6','G5','E5'],classical:['G4','A4','B4','D5','C5'],romantic:['G4','B4','D5','G5','D5','B4'],impressionist:['D4','F#4','A4','C5','E5'],modern:['E4','G4','C5','E5','C5','G4'],jazz:['D4','F4','A4','C5','A4','F4'],contemporary:['C4','G4','C5','G5','C5']};
+/* [name, period, category, years, blurb] */
+var PIANISTS=[
+ ['Johann Sebastian Bach','baroque','Baroque composer','1685–1750','The summit of the Baroque; fugues and preludes that are pure architecture in sound.'],
+ ['George Frideric Handel','baroque','Baroque composer','1685–1759','Baroque master of oratorio and grand keyboard suites.'],
+ ['Domenico Scarlatti','baroque','Baroque composer','1685–1757','555 harpsichord sonatas that sparkle a century ahead of their time.'],
+ ['Jean-Philippe Rameau','baroque','Baroque composer','1683–1764','French Baroque giant of the harpsichord and of harmony itself.'],
+ ['François Couperin','baroque','Baroque composer','1668–1733','“Le Grand” — elegant French harpsichord miniatures full of character.'],
+ ['Girolamo Frescobaldi','baroque','Baroque composer','1583–1643','Early-Baroque keyboard innovator; toccatas of daring freedom.'],
+ ['Dieterich Buxtehude','baroque','Baroque composer','1637–1707','North-German organ master the young Bach walked 400 km to hear.'],
+ ['Johann Pachelbel','baroque','Baroque composer','1653–1706','Baroque organist behind the endlessly borrowed Canon in D.'],
+ ['Antonio Soler','baroque','Baroque composer','1729–1783','Spanish monk who wrote fiery, Scarlatti-flavoured keyboard sonatas.'],
+ ['Glenn Gould','baroque','Bach interpreter','1932–1982','Singular Bach interpreter whose Goldberg Variations redefined the work.'],
+ ['Wolfgang Amadeus Mozart','classical','Classical composer','1756–1791','Effortless perfection; 27 concertos of wit, song and drama.'],
+ ['Joseph Haydn','classical','Classical composer','1732–1809','Father of the sonata; playful, endlessly inventive keyboard writing.'],
+ ['Ludwig van Beethoven','classical','Classical–Romantic composer','1770–1827','32 sonatas that carry the piano from Classical poise to Romantic storm.'],
+ ['Muzio Clementi','classical','Classical composer','1752–1832','“Father of the pianoforte” — virtuoso, composer and piano maker.'],
+ ['Carl Philipp Emanuel Bach','classical','Classical composer','1714–1788','Bach’s son and the bridge to the Classical style.'],
+ ['Johann Christian Bach','classical','Classical composer','1735–1782','“The London Bach”, whose galant elegance shaped the young Mozart.'],
+ ['Johann Nepomuk Hummel','classical','Classical composer','1778–1837','Mozart’s pupil and a brilliant Classical-Romantic virtuoso.'],
+ ['Carl Czerny','classical','Composer & pedagogue','1791–1857','Beethoven’s pupil and Liszt’s teacher; his studies still train every pianist.'],
+ ['John Field','classical','Nocturne pioneer','1782–1837','Irish composer who invented the nocturne, later perfected by Chopin.'],
+ ['Jan Ladislav Dussek','classical','Classical composer','1760–1812','Bohemian virtuoso and early-Romantic voice at the keyboard.'],
+ ['Alfred Brendel','classical','Concert pianist','b. 1931','Austrian thinker-pianist revered for Beethoven, Schubert and Mozart.'],
+ ['Wilhelm Kempff','classical','Concert pianist','1895–1991','German poet of Beethoven and Schubert with a warm, songful tone.'],
+ ['Clara Haskil','classical','Concert pianist','1895–1960','Romanian pianist of rare purity in Mozart and Schumann.'],
+ ['Mitsuko Uchida','classical','Concert pianist','b. 1948','Japanese-British pianist of luminous Mozart and Schubert.'],
+ ['András Schiff','classical','Concert pianist','b. 1953','Hungarian-British master of Bach, Beethoven and Schubert.'],
+ ['Murray Perahia','classical','Concert pianist','b. 1947','American pianist prized for singing tone and Bach playing.'],
+ ['Rudolf Serkin','classical','Concert pianist','1903–1991','Towering interpreter of the Austro-German classics.'],
+ ['Claude Debussy','impressionist','Impressionist composer','1862–1918','Painter in sound; dissolved harmony into light and water.'],
+ ['Maurice Ravel','impressionist','Impressionist composer','1875–1937','Jeweller of the keyboard — colour, precision and glitter.'],
+ ['Erik Satie','impressionist','Impressionist composer','1866–1925','Eccentric minimalist ahead of his time; the Gymnopédies.'],
+ ['Federico Mompou','impressionist','Impressionist composer','1893–1987','Catalan composer of hushed, intimate piano miniatures.'],
+ ['Manuel de Falla','impressionist','Spanish composer','1876–1946','Spain’s great nationalist voice, steeped in flamenco colour.'],
+ ['Frédéric Chopin','romantic','Romantic composer','1810–1849','The poet of the piano — nocturnes, études and ballades of pure song.'],
+ ['Franz Liszt','romantic','Virtuoso & composer','1811–1886','The first superstar pianist; invented the solo recital.'],
+ ['Robert Schumann','romantic','Romantic composer','1810–1856','Romantic dreamer whose piano cycles read like secret diaries.'],
+ ['Clara Schumann','romantic','Composer & pianist','1819–1896','Leading virtuoso of her age and a composer in her own right.'],
+ ['Johannes Brahms','romantic','Romantic composer','1833–1897','Granite architecture and Romantic warmth in equal measure.'],
+ ['Franz Schubert','romantic','Romantic composer','1797–1828','Endless melody; late sonatas of heartbreaking depth.'],
+ ['Felix Mendelssohn','romantic','Romantic composer','1809–1847','Effortless lyricism; the Songs Without Words.'],
+ ['Pyotr Ilyich Tchaikovsky','romantic','Romantic composer','1840–1893','Russian melodist behind the beloved First Concerto.'],
+ ['Edvard Grieg','romantic','Romantic composer','1843–1907','Norway’s voice; the evergreen Piano Concerto and Lyric Pieces.'],
+ ['Sergei Rachmaninoff','romantic','Composer & pianist','1873–1943','Huge hands, oceanic feeling — the last great Romantic.'],
+ ['Camille Saint-Saëns','romantic','Romantic composer','1835–1921','French master of elegance and dazzling concertos.'],
+ ['César Franck','romantic','Romantic composer','1822–1890','Organist-composer of noble, cyclic Romantic structures.'],
+ ['Anton Rubinstein','romantic','Composer & pianist','1829–1894','Titanic Russian virtuoso and founder of the St Petersburg Conservatory.'],
+ ['Moritz Moszkowski','romantic','Romantic composer','1854–1925','Composer of sparkling, grateful salon and concert pieces.'],
+ ['Isaac Albéniz','romantic','Spanish composer','1860–1909','Spanish colour and rhythm distilled in Iberia.'],
+ ['Enrique Granados','romantic','Spanish composer','1867–1916','Romantic Spanish lyricism; the Goyescas.'],
+ ['Gabriel Fauré','romantic','Romantic composer','1845–1924','Subtle French harmony and understated emotion.'],
+ ['Charles-Valentin Alkan','romantic','Virtuoso composer','1813–1888','Reclusive genius of fiendishly difficult études.'],
+ ['Sigismond Thalberg','romantic','Virtuoso pianist','1812–1871','Liszt’s great rival; the “three-hand” illusion.'],
+ ['Leopold Godowsky','romantic','Virtuoso composer','1870–1938','Wrote some of the hardest music ever set for the hands.'],
+ ['Ferruccio Busoni','romantic','Composer & pianist','1866–1924','Visionary pianist-composer and monumental Bach transcriber.'],
+ ['Ignacy Jan Paderewski','romantic','Pianist & statesman','1860–1941','Global superstar pianist who became Poland’s prime minister.'],
+ ['Vladimir Horowitz','romantic','Virtuoso pianist','1903–1989','Electrifying tone and thunder; the legend of the 20th century.'],
+ ['Arthur Rubinstein','romantic','Concert pianist','1887–1982','Aristocratic Chopin and a life of undimmed joy.'],
+ ['Josef Hofmann','romantic','Virtuoso pianist','1876–1957','Prodigy of astonishing control, admired by Rachmaninoff.'],
+ ['Alfred Cortot','romantic','Concert pianist','1877–1962','French poet of Chopin and Schumann.'],
+ ['Walter Gieseking','romantic','Concert pianist','1895–1956','Master of Debussy and Ravel with a feather touch.'],
+ ['Dinu Lipatti','romantic','Concert pianist','1917–1950','Radiant purity in a tragically short life.'],
+ ['Wilhelm Backhaus','romantic','Concert pianist','1884–1969','Granite Beethoven from a grand old lion of the keyboard.'],
+ ['Edwin Fischer','romantic','Concert pianist','1886–1960','Warm, humane Bach and Beethoven; a beloved teacher.'],
+ ['Myra Hess','romantic','Concert pianist','1890–1965','British pianist who lifted wartime London with lunchtime concerts.'],
+ ['Martha Argerich','romantic','Virtuoso pianist','b. 1941','Volcanic temperament and dazzling spontaneity.'],
+ ['Daniel Barenboim','romantic','Pianist & conductor','b. 1942','Pianist-conductor of vast repertoire and vision.'],
+ ['Maurizio Pollini','romantic','Concert pianist','b. 1942','Steely precision married to deep musical intelligence.'],
+ ['Krystian Zimerman','romantic','Concert pianist','b. 1956','Polish perfectionist of luminous Chopin.'],
+ ['Claudio Arrau','romantic','Concert pianist','1903–1991','Chilean sage of profound, unhurried interpretations.'],
+ ['Emanuel Ax','romantic','Concert pianist','b. 1949','American pianist of warmth and generosity.'],
+ ['Van Cliburn','romantic','Concert pianist','1934–2013','Won Moscow at the height of the Cold War and became a hero.'],
+ ['Vladimir Ashkenazy','romantic','Pianist & conductor','b. 1937','Complete Romantic repertoire with clarity and drive.'],
+ ['Radu Lupu','romantic','Concert pianist','1945–2022','Romanian mystic of Schubert and Brahms.'],
+ ['Nelson Freire','romantic','Concert pianist','1944–2021','Brazilian pianist of natural, singing brilliance.'],
+ ['Stephen Hough','romantic','Pianist & composer','b. 1961','British polymath — pianist, composer and writer.'],
+ ['Marc-André Hamelin','romantic','Virtuoso pianist','b. 1961','Fearless champion of the impossible and the obscure.'],
+ ['Evgeny Kissin','romantic','Virtuoso pianist','b. 1971','Prodigy turned titan of the Romantic repertoire.'],
+ ['Grigory Sokolov','romantic','Concert pianist','b. 1950','Reclusive Russian giant of hypnotic concentration.'],
+ ['Hélène Grimaud','romantic','Concert pianist','b. 1969','French pianist of intensity — and a wolf conservationist.'],
+ ['Lang Lang','romantic','Concert pianist','b. 1982','China’s superstar who brought millions to the piano.'],
+ ['Yuja Wang','romantic','Virtuoso pianist','b. 1987','Breathtaking technique and fearless flair.'],
+ ['Daniil Trifonov','romantic','Virtuoso pianist','b. 1991','The most talked-about virtuoso of his generation.'],
+ ['Igor Levit','romantic','Concert pianist','b. 1987','Fierce intellect and conscience at the keyboard.'],
+ ['Khatia Buniatishvili','romantic','Concert pianist','b. 1987','Georgian pianist of romantic drama and daring.'],
+ ['Seong-Jin Cho','romantic','Concert pianist','b. 1994','Korean Chopin Competition winner of poised elegance.'],
+ ['Sergei Prokofiev','modern','20th-c. composer','1891–1953','Steel fingers and biting wit; percussive modern drive.'],
+ ['Alexander Scriabin','modern','Composer & pianist','1872–1915','Mystic visionary who heard colours in his chords.'],
+ ['Béla Bartók','modern','Composer & pianist','1881–1945','Folk fire and modernist rhythm from Hungary.'],
+ ['Igor Stravinsky','modern','20th-c. composer','1882–1971','Revolutionary of rhythm; Petrushka at the keyboard.'],
+ ['Dmitri Shostakovich','modern','20th-c. composer','1906–1975','24 Preludes and Fugues; irony under Soviet pressure.'],
+ ['Olivier Messiaen','modern','20th-c. composer','1908–1992','Birdsong, colour and faith in vast piano frescoes.'],
+ ['György Ligeti','modern','20th-c. composer','1923–2006','Études of dazzling rhythmic complexity.'],
+ ['Paul Hindemith','modern','20th-c. composer','1895–1963','Craftsman of clear, contrapuntal modern lines.'],
+ ['Arnold Schoenberg','modern','20th-c. composer','1874–1951','Broke tonality; father of twelve-tone music.'],
+ ['Charles Ives','modern','American composer','1874–1954','Rugged American original; the Concord Sonata.'],
+ ['Aaron Copland','modern','American composer','1900–1990','The open, plain-spoken sound of America.'],
+ ['Samuel Barber','modern','American composer','1910–1981','Lyric American Romanticism into the modern age.'],
+ ['Francis Poulenc','modern','20th-c. composer','1899–1963','French wit and tenderness in equal measure.'],
+ ['Karol Szymanowski','modern','20th-c. composer','1882–1937','Poland’s luminous, exotic modernist.'],
+ ['Nikolai Medtner','modern','Composer & pianist','1880–1951','Russian Romantic-modernist of the “fairy tales”.'],
+ ['Alberto Ginastera','modern','20th-c. composer','1916–1983','Argentine rhythm and fire.'],
+ ['Heitor Villa-Lobos','modern','20th-c. composer','1887–1959','Brazil’s teeming, colourful voice.'],
+ ['Sviatoslav Richter','modern','Concert pianist','1915–1997','Elemental power and vast, unpredictable repertoire.'],
+ ['Emil Gilels','modern','Concert pianist','1916–1985','Golden tone and iron command.'],
+ ['Art Tatum','jazz','Jazz pianist','1909–1956','Superhuman technique that awed classical masters.'],
+ ['Bill Evans','jazz','Jazz pianist','1929–1980','Floating, impressionist harmony — played from the ear.'],
+ ['Thelonious Monk','jazz','Jazz pianist','1917–1982','Angular, witty, utterly original architecture.'],
+ ['Herbie Hancock','jazz','Jazz pianist','b. 1940','From acoustic bop to electric funk and beyond.'],
+ ['Oscar Peterson','jazz','Jazz pianist','1925–2007','Dazzling swing and virtuosity.'],
+ ['Duke Ellington','jazz','Bandleader & pianist','1899–1974','The composer-pianist who elevated jazz to art.'],
+ ['Bud Powell','jazz','Bebop pianist','1924–1966','Translated Charlie Parker to the keyboard.'],
+ ['Chick Corea','jazz','Jazz pianist','1941–2021','Latin fire and fusion invention.'],
+ ['Keith Jarrett','jazz','Jazz pianist','b. 1945','Master of the wholly improvised solo concert.'],
+ ['McCoy Tyner','jazz','Jazz pianist','1938–2020','Thunderous modal power with the Coltrane quartet.'],
+ ['Fats Waller','jazz','Stride pianist','1904–1943','Joyful stride and irrepressible showmanship.'],
+ ['Erroll Garner','jazz','Jazz pianist','1921–1977','Orchestral swing and the standard “Misty”.'],
+ ['Ahmad Jamal','jazz','Jazz pianist','1930–2023','Space, restraint and groove.'],
+ ['Dave Brubeck','jazz','Jazz pianist','1920–2012','Odd metres made irresistible; “Take Five”.'],
+ ['Scott Joplin','jazz','Ragtime composer','1868–1917','The King of Ragtime; “Maple Leaf Rag”.'],
+ ['George Gershwin','jazz','Composer & pianist','1898–1937','Bridged jazz and the concert hall; Rhapsody in Blue.'],
+ ['Count Basie','jazz','Bandleader & pianist','1904–1984','Swing economy — one perfect note at a time.'],
+ ['Jelly Roll Morton','jazz','Early-jazz pianist','1890–1941','Self-styled inventor of jazz; New Orleans pioneer.'],
+ ['Earl Hines','jazz','Jazz pianist','1903–1983','“Trumpet-style” piano that changed the music.'],
+ ['Teddy Wilson','jazz','Swing pianist','1912–1986','Elegant, refined swing with Benny Goodman.'],
+ ['Nat King Cole','jazz','Pianist & singer','1919–1965','Peerless trio pianist before the world knew the voice.'],
+ ['Mary Lou Williams','jazz','Jazz pianist','1910–1981','Composer-pianist who mentored the bebop generation.'],
+ ['George Shearing','jazz','Jazz pianist','1919–2011','The blindfold-cool “Shearing sound”.'],
+ ['Horace Silver','jazz','Hard-bop pianist','1928–2014','Funky, soulful hard-bop grooves.'],
+ ['Cecil Taylor','jazz','Free-jazz pianist','1929–2018','Percussive free-jazz volcano.'],
+ ['Brad Mehldau','jazz','Jazz pianist','b. 1970','Introspective harmony bridging Bach, jazz and pop.'],
+ ['Chucho Valdés','jazz','Latin-jazz pianist','b. 1941','Cuban giant of Afro-Latin jazz.'],
+ ['Michel Petrucciani','jazz','Jazz pianist','1962–1999','Enormous spirit and lyricism in a fragile body.'],
+ ['Hank Jones','jazz','Jazz pianist','1918–2010','Impeccable taste over a seven-decade career.'],
+ ['Kenny Barron','jazz','Jazz pianist','b. 1943','Elegance and swing, a musician’s musician.'],
+ ['Vince Guaraldi','jazz','Jazz pianist','1928–1976','Warmth and melody; the Peanuts soundtracks.'],
+ ['Hiromi Uehara','jazz','Jazz pianist','b. 1979','Explosive Japanese virtuoso of genre-blending fire.'],
+ ['Robert Glasper','jazz','Jazz pianist','b. 1978','Where modern jazz meets hip-hop and soul.'],
+ ['Diana Krall','jazz','Pianist & singer','b. 1964','Smoky voice over supple, swinging piano.'],
+ ['Philip Glass','contemporary','Minimalist composer','b. 1937','Hypnotic minimalist patterns that reshaped modern music.'],
+ ['Steve Reich','contemporary','Minimalist composer','b. 1936','Phasing and pulse; a founder of minimalism.'],
+ ['Arvo Pärt','contemporary','Contemporary composer','b. 1935','Sacred stillness; the “tintinnabuli” style.'],
+ ['John Adams','contemporary','Contemporary composer','b. 1947','Post-minimalist energy and lush American colour.'],
+ ['Ludovico Einaudi','contemporary','Neo-classical','b. 1955','The world’s most-streamed living pianist-composer.'],
+ ['Nils Frahm','contemporary','Neo-classical','b. 1982','Felt-piano intimacy meets electronics.'],
+ ['Max Richter','contemporary','Neo-classical','b. 1966','Cinematic minimalism; “On the Nature of Daylight”.'],
+ ['Ólafur Arnalds','contemporary','Neo-classical','b. 1986','Icelandic warmth blending piano and ambient sound.'],
+ ['Yann Tiersen','contemporary','Film & ambient','b. 1970','The wistful world of the Amélie soundtrack.'],
+ ['Ryuichi Sakamoto','contemporary','Composer & pianist','1952–2023','Pioneer bridging electronic, classical and film.'],
+ ['Michael Nyman','contemporary','Film composer','b. 1944','Driving minimalism; the music of The Piano.'],
+ ['Yiruma','contemporary','Neo-classical','b. 1978','Korean composer of the beloved “River Flows in You”.'],
+ ['George Winston','contemporary','New-age pianist','1949–2023','Gentle, seasonal solo-piano landscapes.'],
+ ['Fazıl Say','contemporary','Pianist & composer','b. 1970','Turkish firebrand of piano and composition.'],
+ ['Hania Rani','contemporary','Neo-classical','b. 1990','Polish pianist of hushed, luminous textures.'],
+ ['Víkingur Ólafsson','contemporary','Concert pianist','b. 1984','Icelandic pianist reimagining Bach and Rameau for today.']
+];
+var piaBuilt=false,piaFilter='all',piaQuery='';
+function eraById(id){for(var i=0;i<ERAS.length;i++){if(ERAS[i].id===id)return ERAS[i];}return ERAS[2];}
+function pget(name){for(var i=0;i<PIANISTS.length;i++){if(PIANISTS[i][0]===name)return PIANISTS[i];}return null;}
+function initials(n){var a=n.trim().split(/\s+/);return ((a[0]&&a[0][0])||'')+((a.length>1&&a[a.length-1][0])||'');}
+function playPhrase(period,btn){var p=PERIODS[period]||PERIODS.romantic,era=eraById(p.voice),m=PHRASE[period]||PHRASE.romantic;loadEra(era.gm);if(btn)btn.classList.add('playing');m.forEach(function(n,i){setTimeout(function(){voice(era,n);if(btn&&i===m.length-1)setTimeout(function(){btn.classList.remove('playing');},280);},i*300);});}
+function renderPiaControls(){
+ var c=document.getElementById('pia-controls');if(!c)return;
+ var chips='<button class="chip'+(piaFilter==='all'?' on':'')+'" data-f="all">All</button>';
+ Object.keys(PERIODS).forEach(function(k){chips+='<button class="chip'+(piaFilter===k?' on':'')+'" data-f="'+k+'" style="--pc:'+PERIODS[k].color+'">'+PERIODS[k].label+'</button>';});
+ c.innerHTML='<input class="pia-search" id="pia-search" placeholder="Search a pianist…" value="'+piaQuery.replace(/"/g,'&quot;')+'"><div class="chips">'+chips+'</div>';
+ document.getElementById('pia-search').oninput=function(e){piaQuery=e.target.value;renderPiaList();};
+ c.querySelectorAll('.chip').forEach(function(b){b.onclick=function(){piaFilter=b.getAttribute('data-f');renderPiaControls();renderPiaList();};});
+}
+function renderPiaList(){
+ var wrap=document.getElementById('pia-list');if(!wrap)return;
+ var q=piaQuery.toLowerCase();
+ var items=PIANISTS.filter(function(p){return (piaFilter==='all'||p[1]===piaFilter)&&(!q||p[0].toLowerCase().indexOf(q)>=0);});
+ if(items.length===0){wrap.innerHTML='<p class="pia-empty">No one by that name yet.</p>';return;}
+ var out='<div class="pia-count">'+items.length+' pianists</div><div class="pia-grid">';
+ items.forEach(function(p){var per=PERIODS[p[1]]||PERIODS.romantic,cat=p[2]||per.label;
+  out+='<button class="pia-card" data-name="'+p[0].replace(/"/g,'&quot;')+'" data-period="'+p[1]+'" style="--pc:'+per.color+'"><span class="pc-name">'+p[0]+'</span><span class="pc-era">'+cat+' · '+(p[3]||'')+'</span></button>';});
+ out+='</div>';wrap.innerHTML=out;
+ wrap.querySelectorAll('.pia-card').forEach(function(b){b.onclick=function(){showPianist(b.getAttribute('data-name'),b.getAttribute('data-period'));};});
+}
+function parseYears(t){if(!t)return '';var m=t.match(/\(([^)]*\d{3,4}[^)]*)\)/);if(!m)return '';var ys=m[1].match(/\d{3,4}/g);if(!ys)return '';if(/born|b\.\s/i.test(m[1]))return 'b. '+ys[0];if(ys.length>=2)return ys[0]+'–'+ys[1];return 'b. '+ys[0];}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function loadWiki(title,cb){
+ var key='wik3_'+title,cached=store.get(key);
+ if(cached){try{cb(JSON.parse(cached));return;}catch(e){}}
+ var url='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts%7Cpageimages%7Cdescription&exintro=1&explaintext=1&redirects=1&piprop=thumbnail&pithumbsize=480&titles='+encodeURIComponent(title);
+ fetch(url).then(function(r){return r.json();}).then(function(d){
+  var pages=d&&d.query&&d.query.pages,pg=null,k;if(pages){for(k in pages){pg=pages[k];break;}}
+  var o={extract:(pg&&pg.extract)||'',img:(pg&&pg.thumbnail&&pg.thumbnail.source)||'',desc:(pg&&pg.description)||'',url:'https://en.wikipedia.org/wiki/'+encodeURIComponent((pg&&pg.title)||title)};
+  try{store.set(key,JSON.stringify(o));}catch(e){}cb(o);
+ }).catch(function(){cb(null);});
+}
+function showPianist(name,period){
+ var per=PERIODS[period]||PERIODS.romantic,e=pget(name),cat=(e&&e[2])||per.label,yrs=(e&&e[3])||'',blurb=(e&&e[4])||'';
+ var list=document.getElementById('pia-list'),ctr=document.getElementById('pia-controls'),det=document.getElementById('pia-detail');
+ list.classList.add('hidden');ctr.classList.add('hidden');det.classList.remove('hidden');
+ det.innerHTML='<button class="pia-back" id="pia-back">← All pianists</button>'
+  +'<div class="pia-hero" style="--pc:'+per.color+'"><div class="ph-img" id="ph-img">'+esc(initials(name))+'</div><div class="ph-txt">'
+  +'<div class="ph-chips"><span class="ph-chip">'+per.label+'</span><span class="ph-chip alt">'+esc(cat)+'</span></div>'
+  +'<h3 class="ph-name">'+esc(name)+'</h3><div class="ph-years" id="ph-years">'+esc(yrs)+'</div></div></div>'
+  +'<div class="ph-extract" id="ph-extract"><p>'+esc(blurb)+'</p></div>'
+  +'<div class="t-actions"><button class="btn" id="ph-phrase"><span class="play"></span> Play a phrase</button><button class="btn ghost" id="ph-try">Try it by ear →</button></div>'
+  +'<a class="ph-src" id="ph-src" target="_blank" rel="noopener">Read more on Wikipedia →</a>';
+ document.getElementById('pia-back').onclick=function(){det.classList.add('hidden');det.innerHTML='';list.classList.remove('hidden');ctr.classList.remove('hidden');window.scrollTo({top:0});};
+ document.getElementById('ph-phrase').onclick=function(){playPhrase(period,this);};
+ document.getElementById('ph-try').onclick=function(){go('ear');};
+ window.scrollTo({top:0,behavior:'smooth'});
+ loadWiki(name,function(o){
+  if(!o)return;
+  if(o.img){var im=document.getElementById('ph-img');if(im){im.style.backgroundImage='url('+o.img+')';im.classList.add('has');}}
+  var y=parseYears(o.extract);var ye=document.getElementById('ph-years');if(ye&&y)ye.textContent=y;
+  if(o.extract){var ps=o.extract.split(/\n+/).filter(function(x){return x.trim();}).slice(0,6);var ex=document.getElementById('ph-extract');if(ex&&ps.length)ex.innerHTML=ps.map(function(x){return '<p>'+esc(x)+'</p>';}).join('');}
+ });
+}
+function ensurePianists(){if(piaBuilt)return;piaBuilt=true;renderPiaControls();renderPiaList();}
+
+</script>
+</body>
+</html>
