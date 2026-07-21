@@ -240,6 +240,8 @@
   .ph-img{display:flex;align-items:center;justify-content:center;color:var(--pc,var(--gold));font-family:"Playfair Display",serif;font-weight:800;font-size:1.9rem;overflow:hidden}
   .ph-img.has{color:transparent}
   @media(max-width:600px){:root{--kw:48px;--bw:30px;--kh:190px;--bh:118px}}
+  @media(max-width:600px){.app{padding:6px 16px 104px}.hero{padding:30px 0 18px}}
+  .tabbar{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -419,10 +421,11 @@ window.addEventListener('keyup',function(e){if(current!=='keyboard')return;var n
 
 /* ===================== Part 3: Play by Ear ===================== */
 var earLen=3,earSeq=[],earInput=[],earPhase='idle',earVerdict=null,earStreak=0,earBest=0,earBuilt=false;
+var earLabels=true,earSustain=true;
 var earKeyEls={},earHeld={};
 var EAR_POOL=['C4','D4','E4','F4','G4','A4','B4','C5'];
 function earFlash(n){var el=earKeyEls[n];if(!el)return;el.classList.add('active');setTimeout(function(){el.classList.remove('active');},280);}
-function earPlaySeq(s){s.forEach(function(nt,i){setTimeout(function(){earFlash(nt);playEra(nt);},i*560);});}
+function earPlaySeq(s){s.forEach(function(nt,i){setTimeout(function(){playEra(nt);},i*560);});}
 function renderEarPanel(){
  var p=document.getElementById('ear-panel');if(!p)return;
  var title=earPhase==='idle'?'Ready when you are':earPhase==='listen'?'Now play it back':'Another round?';
@@ -448,16 +451,20 @@ function earOnNote(n){
 }
 function buildEarKeyboard(){
  var mount=document.getElementById('ear-mount');if(!mount)return;earKeyEls={};earHeld={};
+ var tools=document.createElement('div');tools.className='kb-tools';
+ function tog(lbl,val,fn){var l=document.createElement('label');l.className='kb-toggle';l.innerHTML='<input type="checkbox" '+(val?'checked':'')+'/> '+lbl;l.querySelector('input').addEventListener('change',function(e){fn(e.target.checked);});return l;}
+ tools.appendChild(tog('Note names',earLabels,function(v){earLabels=v;buildEarKeyboard();}));
+ tools.appendChild(tog('Sustain',earSustain,function(v){earSustain=v;}));
  var panel=document.createElement('div');panel.className='kb-panel';
  var felt=document.createElement('div');felt.className='felt';panel.appendChild(felt);
  var scroll=document.createElement('div');scroll.className='kb-scroll';
  var kb=document.createElement('div');kb.className='kb';kb.id='ear-kb';kb.style.setProperty('--era',curEra.color);
  var wi=0,pos={};KEYS.forEach(function(k){if(k.t==='w'){pos[k.n]=wi;wi++;}else pos[k.n]=wi;});
- function stopN(k,el){el.classList.remove('active');if(earHeld[k]){try{earHeld[k].stop();}catch(e){}delete earHeld[k];}}
+ function stopN(k,el){el.classList.remove('active');if(earHeld[k]){if(!earSustain&&!curEra.hold){try{earHeld[k].stop();}catch(e){}}delete earHeld[k];}}
  function mk(k){
   var el=document.createElement('div');el.className=k.t==='w'?'wkey':'bkey';
   if(k.t==='b')el.style.left='calc('+pos[k.n]+' * var(--kw) - var(--bw)/2)';
-  var s=document.createElement('span');s.className='klabel';s.textContent=k.n;el.appendChild(s);
+  if(earLabels){var s=document.createElement('span');s.className='klabel';s.textContent=k.n;el.appendChild(s);}
   el.addEventListener('pointerdown',function(e){e.preventDefault();if(k.t==='b')e.stopPropagation();try{el.setPointerCapture(e.pointerId);}catch(x){}el.classList.add('active');earHeld[k.n]=playEra(k.n);earOnNote(k.n);});
   el.addEventListener('pointerup',function(){stopN(k.n,el);});
   el.addEventListener('pointercancel',function(){stopN(k.n,el);});
@@ -467,8 +474,8 @@ function buildEarKeyboard(){
  KEYS.filter(function(k){return k.t==='w';}).forEach(function(k){kb.appendChild(mk(k));});
  KEYS.filter(function(k){return k.t==='b';}).forEach(function(k){kb.appendChild(mk(k));});
  scroll.appendChild(kb);panel.appendChild(scroll);
- var hint=document.createElement('p');hint.className='kb-hint';hint.innerHTML='Listen, then reproduce the phrase on the keys above.';
- mount.innerHTML='';mount.appendChild(panel);mount.appendChild(hint);
+ var hint=document.createElement('p');hint.className='kb-hint';hint.innerHTML='Listen, then play it back on the keys — no peeking.';
+ mount.innerHTML='';mount.appendChild(tools);mount.appendChild(panel);mount.appendChild(hint);
 }
 function renderEarEra(){
  var box=document.getElementById('ear-era');if(!box)return;box.innerHTML='';
