@@ -236,6 +236,9 @@
   .ph-chip.alt{color:var(--text-3)}
   .ph-years{font-size:.82rem;color:var(--text-3);margin-top:8px}
   .ph-extract p{font-size:1rem;color:var(--text-2);line-height:1.7;margin:0 0 12px}
+  /* monogram avatar */
+  .ph-img{display:flex;align-items:center;justify-content:center;color:var(--pc,var(--gold));font-family:"Playfair Display",serif;font-weight:800;font-size:1.9rem;overflow:hidden}
+  .ph-img.has{color:transparent}
   @media(max-width:600px){:root{--kw:48px;--bw:30px;--kh:190px;--bh:118px}}
   @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -259,7 +262,7 @@
   <div id="pianists" class="page hidden"><div class="chapter">
     <div class="kicker" style="text-align:left">The Legends</div>
     <h2>Pianists <em>&amp; Composers</em></h2>
-    <p class="kb-sub">Everyone here plays by ear in the end. Tap a name for their story — and try a phrase in their spirit.</p>
+    <p class="kb-sub">Tap any name for a full profile — portrait, years, category and a written bio, all built in.</p>
     <div id="pia-controls"></div>
     <div id="pia-list"></div>
     <div id="pia-detail" class="hidden"></div>
@@ -581,172 +584,167 @@ document.addEventListener('touchstart',unlockAudio,{passive:true});
 document.addEventListener('keydown',unlockAudio);
 
 /* ===================== Part 5: Pianists ===================== */
-var PERIODS={
- baroque:{label:'Baroque',color:'#8fa07a',voice:'harpsichord'},classical:{label:'Classical',color:'#d8b26a',voice:'fortepiano'},
- romantic:{label:'Romantic',color:'#c9a24c',voice:'grand'},impressionist:{label:'Impressionist',color:'#b98db0',voice:'grand'},
- modern:{label:'Modern',color:'#c1824c',voice:'upright'},jazz:{label:'Jazz',color:'#cf7a44',voice:'rhodes'},contemporary:{label:'Contemporary',color:'#9a86c4',voice:'synth'}
-};
+var PERIODS={baroque:{label:'Baroque',color:'#8fa07a',voice:'harpsichord'},classical:{label:'Classical',color:'#d8b26a',voice:'fortepiano'},romantic:{label:'Romantic',color:'#c9a24c',voice:'grand'},impressionist:{label:'Impressionist',color:'#b98db0',voice:'grand'},modern:{label:'Modern',color:'#c1824c',voice:'upright'},jazz:{label:'Jazz',color:'#cf7a44',voice:'rhodes'},contemporary:{label:'Contemporary',color:'#9a86c4',voice:'synth'}};
 var PHRASE={baroque:['C5','E5','G5','C6','G5','E5'],classical:['G4','A4','B4','D5','C5'],romantic:['G4','B4','D5','G5','D5','B4'],impressionist:['D4','F#4','A4','C5','E5'],modern:['E4','G4','C5','E5','C5','G4'],jazz:['D4','F4','A4','C5','A4','F4'],contemporary:['C4','G4','C5','G5','C5']};
-/* [name, period, category, years, blurb] */
 var PIANISTS=[
- ['Johann Sebastian Bach','baroque','Baroque composer','1685–1750','The summit of the Baroque; fugues and preludes that are pure architecture in sound.'],
- ['George Frideric Handel','baroque','Baroque composer','1685–1759','Baroque master of oratorio and grand keyboard suites.'],
- ['Domenico Scarlatti','baroque','Baroque composer','1685–1757','555 harpsichord sonatas that sparkle a century ahead of their time.'],
- ['Jean-Philippe Rameau','baroque','Baroque composer','1683–1764','French Baroque giant of the harpsichord and of harmony itself.'],
- ['François Couperin','baroque','Baroque composer','1668–1733','“Le Grand” — elegant French harpsichord miniatures full of character.'],
- ['Girolamo Frescobaldi','baroque','Baroque composer','1583–1643','Early-Baroque keyboard innovator; toccatas of daring freedom.'],
- ['Dieterich Buxtehude','baroque','Baroque composer','1637–1707','North-German organ master the young Bach walked 400 km to hear.'],
- ['Johann Pachelbel','baroque','Baroque composer','1653–1706','Baroque organist behind the endlessly borrowed Canon in D.'],
- ['Antonio Soler','baroque','Baroque composer','1729–1783','Spanish monk who wrote fiery, Scarlatti-flavoured keyboard sonatas.'],
- ['Glenn Gould','baroque','Bach interpreter','1932–1982','Singular Bach interpreter whose Goldberg Variations redefined the work.'],
- ['Wolfgang Amadeus Mozart','classical','Classical composer','1756–1791','Effortless perfection; 27 concertos of wit, song and drama.'],
- ['Joseph Haydn','classical','Classical composer','1732–1809','Father of the sonata; playful, endlessly inventive keyboard writing.'],
- ['Ludwig van Beethoven','classical','Classical–Romantic composer','1770–1827','32 sonatas that carry the piano from Classical poise to Romantic storm.'],
- ['Muzio Clementi','classical','Classical composer','1752–1832','“Father of the pianoforte” — virtuoso, composer and piano maker.'],
- ['Carl Philipp Emanuel Bach','classical','Classical composer','1714–1788','Bach’s son and the bridge to the Classical style.'],
- ['Johann Christian Bach','classical','Classical composer','1735–1782','“The London Bach”, whose galant elegance shaped the young Mozart.'],
- ['Johann Nepomuk Hummel','classical','Classical composer','1778–1837','Mozart’s pupil and a brilliant Classical-Romantic virtuoso.'],
- ['Carl Czerny','classical','Composer & pedagogue','1791–1857','Beethoven’s pupil and Liszt’s teacher; his studies still train every pianist.'],
- ['John Field','classical','Nocturne pioneer','1782–1837','Irish composer who invented the nocturne, later perfected by Chopin.'],
- ['Jan Ladislav Dussek','classical','Classical composer','1760–1812','Bohemian virtuoso and early-Romantic voice at the keyboard.'],
- ['Alfred Brendel','classical','Concert pianist','b. 1931','Austrian thinker-pianist revered for Beethoven, Schubert and Mozart.'],
- ['Wilhelm Kempff','classical','Concert pianist','1895–1991','German poet of Beethoven and Schubert with a warm, songful tone.'],
- ['Clara Haskil','classical','Concert pianist','1895–1960','Romanian pianist of rare purity in Mozart and Schumann.'],
- ['Mitsuko Uchida','classical','Concert pianist','b. 1948','Japanese-British pianist of luminous Mozart and Schubert.'],
- ['András Schiff','classical','Concert pianist','b. 1953','Hungarian-British master of Bach, Beethoven and Schubert.'],
- ['Murray Perahia','classical','Concert pianist','b. 1947','American pianist prized for singing tone and Bach playing.'],
- ['Rudolf Serkin','classical','Concert pianist','1903–1991','Towering interpreter of the Austro-German classics.'],
- ['Claude Debussy','impressionist','Impressionist composer','1862–1918','Painter in sound; dissolved harmony into light and water.'],
- ['Maurice Ravel','impressionist','Impressionist composer','1875–1937','Jeweller of the keyboard — colour, precision and glitter.'],
- ['Erik Satie','impressionist','Impressionist composer','1866–1925','Eccentric minimalist ahead of his time; the Gymnopédies.'],
- ['Federico Mompou','impressionist','Impressionist composer','1893–1987','Catalan composer of hushed, intimate piano miniatures.'],
- ['Manuel de Falla','impressionist','Spanish composer','1876–1946','Spain’s great nationalist voice, steeped in flamenco colour.'],
- ['Frédéric Chopin','romantic','Romantic composer','1810–1849','The poet of the piano — nocturnes, études and ballades of pure song.'],
- ['Franz Liszt','romantic','Virtuoso & composer','1811–1886','The first superstar pianist; invented the solo recital.'],
- ['Robert Schumann','romantic','Romantic composer','1810–1856','Romantic dreamer whose piano cycles read like secret diaries.'],
- ['Clara Schumann','romantic','Composer & pianist','1819–1896','Leading virtuoso of her age and a composer in her own right.'],
- ['Johannes Brahms','romantic','Romantic composer','1833–1897','Granite architecture and Romantic warmth in equal measure.'],
- ['Franz Schubert','romantic','Romantic composer','1797–1828','Endless melody; late sonatas of heartbreaking depth.'],
- ['Felix Mendelssohn','romantic','Romantic composer','1809–1847','Effortless lyricism; the Songs Without Words.'],
- ['Pyotr Ilyich Tchaikovsky','romantic','Romantic composer','1840–1893','Russian melodist behind the beloved First Concerto.'],
- ['Edvard Grieg','romantic','Romantic composer','1843–1907','Norway’s voice; the evergreen Piano Concerto and Lyric Pieces.'],
- ['Sergei Rachmaninoff','romantic','Composer & pianist','1873–1943','Huge hands, oceanic feeling — the last great Romantic.'],
- ['Camille Saint-Saëns','romantic','Romantic composer','1835–1921','French master of elegance and dazzling concertos.'],
- ['César Franck','romantic','Romantic composer','1822–1890','Organist-composer of noble, cyclic Romantic structures.'],
- ['Anton Rubinstein','romantic','Composer & pianist','1829–1894','Titanic Russian virtuoso and founder of the St Petersburg Conservatory.'],
- ['Moritz Moszkowski','romantic','Romantic composer','1854–1925','Composer of sparkling, grateful salon and concert pieces.'],
- ['Isaac Albéniz','romantic','Spanish composer','1860–1909','Spanish colour and rhythm distilled in Iberia.'],
- ['Enrique Granados','romantic','Spanish composer','1867–1916','Romantic Spanish lyricism; the Goyescas.'],
- ['Gabriel Fauré','romantic','Romantic composer','1845–1924','Subtle French harmony and understated emotion.'],
- ['Charles-Valentin Alkan','romantic','Virtuoso composer','1813–1888','Reclusive genius of fiendishly difficult études.'],
- ['Sigismond Thalberg','romantic','Virtuoso pianist','1812–1871','Liszt’s great rival; the “three-hand” illusion.'],
- ['Leopold Godowsky','romantic','Virtuoso composer','1870–1938','Wrote some of the hardest music ever set for the hands.'],
- ['Ferruccio Busoni','romantic','Composer & pianist','1866–1924','Visionary pianist-composer and monumental Bach transcriber.'],
- ['Ignacy Jan Paderewski','romantic','Pianist & statesman','1860–1941','Global superstar pianist who became Poland’s prime minister.'],
- ['Vladimir Horowitz','romantic','Virtuoso pianist','1903–1989','Electrifying tone and thunder; the legend of the 20th century.'],
- ['Arthur Rubinstein','romantic','Concert pianist','1887–1982','Aristocratic Chopin and a life of undimmed joy.'],
- ['Josef Hofmann','romantic','Virtuoso pianist','1876–1957','Prodigy of astonishing control, admired by Rachmaninoff.'],
- ['Alfred Cortot','romantic','Concert pianist','1877–1962','French poet of Chopin and Schumann.'],
- ['Walter Gieseking','romantic','Concert pianist','1895–1956','Master of Debussy and Ravel with a feather touch.'],
- ['Dinu Lipatti','romantic','Concert pianist','1917–1950','Radiant purity in a tragically short life.'],
- ['Wilhelm Backhaus','romantic','Concert pianist','1884–1969','Granite Beethoven from a grand old lion of the keyboard.'],
- ['Edwin Fischer','romantic','Concert pianist','1886–1960','Warm, humane Bach and Beethoven; a beloved teacher.'],
- ['Myra Hess','romantic','Concert pianist','1890–1965','British pianist who lifted wartime London with lunchtime concerts.'],
- ['Martha Argerich','romantic','Virtuoso pianist','b. 1941','Volcanic temperament and dazzling spontaneity.'],
- ['Daniel Barenboim','romantic','Pianist & conductor','b. 1942','Pianist-conductor of vast repertoire and vision.'],
- ['Maurizio Pollini','romantic','Concert pianist','b. 1942','Steely precision married to deep musical intelligence.'],
- ['Krystian Zimerman','romantic','Concert pianist','b. 1956','Polish perfectionist of luminous Chopin.'],
- ['Claudio Arrau','romantic','Concert pianist','1903–1991','Chilean sage of profound, unhurried interpretations.'],
- ['Emanuel Ax','romantic','Concert pianist','b. 1949','American pianist of warmth and generosity.'],
- ['Van Cliburn','romantic','Concert pianist','1934–2013','Won Moscow at the height of the Cold War and became a hero.'],
- ['Vladimir Ashkenazy','romantic','Pianist & conductor','b. 1937','Complete Romantic repertoire with clarity and drive.'],
- ['Radu Lupu','romantic','Concert pianist','1945–2022','Romanian mystic of Schubert and Brahms.'],
- ['Nelson Freire','romantic','Concert pianist','1944–2021','Brazilian pianist of natural, singing brilliance.'],
- ['Stephen Hough','romantic','Pianist & composer','b. 1961','British polymath — pianist, composer and writer.'],
- ['Marc-André Hamelin','romantic','Virtuoso pianist','b. 1961','Fearless champion of the impossible and the obscure.'],
- ['Evgeny Kissin','romantic','Virtuoso pianist','b. 1971','Prodigy turned titan of the Romantic repertoire.'],
- ['Grigory Sokolov','romantic','Concert pianist','b. 1950','Reclusive Russian giant of hypnotic concentration.'],
- ['Hélène Grimaud','romantic','Concert pianist','b. 1969','French pianist of intensity — and a wolf conservationist.'],
- ['Lang Lang','romantic','Concert pianist','b. 1982','China’s superstar who brought millions to the piano.'],
- ['Yuja Wang','romantic','Virtuoso pianist','b. 1987','Breathtaking technique and fearless flair.'],
- ['Daniil Trifonov','romantic','Virtuoso pianist','b. 1991','The most talked-about virtuoso of his generation.'],
- ['Igor Levit','romantic','Concert pianist','b. 1987','Fierce intellect and conscience at the keyboard.'],
- ['Khatia Buniatishvili','romantic','Concert pianist','b. 1987','Georgian pianist of romantic drama and daring.'],
- ['Seong-Jin Cho','romantic','Concert pianist','b. 1994','Korean Chopin Competition winner of poised elegance.'],
- ['Sergei Prokofiev','modern','20th-c. composer','1891–1953','Steel fingers and biting wit; percussive modern drive.'],
- ['Alexander Scriabin','modern','Composer & pianist','1872–1915','Mystic visionary who heard colours in his chords.'],
- ['Béla Bartók','modern','Composer & pianist','1881–1945','Folk fire and modernist rhythm from Hungary.'],
- ['Igor Stravinsky','modern','20th-c. composer','1882–1971','Revolutionary of rhythm; Petrushka at the keyboard.'],
- ['Dmitri Shostakovich','modern','20th-c. composer','1906–1975','24 Preludes and Fugues; irony under Soviet pressure.'],
- ['Olivier Messiaen','modern','20th-c. composer','1908–1992','Birdsong, colour and faith in vast piano frescoes.'],
- ['György Ligeti','modern','20th-c. composer','1923–2006','Études of dazzling rhythmic complexity.'],
- ['Paul Hindemith','modern','20th-c. composer','1895–1963','Craftsman of clear, contrapuntal modern lines.'],
- ['Arnold Schoenberg','modern','20th-c. composer','1874–1951','Broke tonality; father of twelve-tone music.'],
- ['Charles Ives','modern','American composer','1874–1954','Rugged American original; the Concord Sonata.'],
- ['Aaron Copland','modern','American composer','1900–1990','The open, plain-spoken sound of America.'],
- ['Samuel Barber','modern','American composer','1910–1981','Lyric American Romanticism into the modern age.'],
- ['Francis Poulenc','modern','20th-c. composer','1899–1963','French wit and tenderness in equal measure.'],
- ['Karol Szymanowski','modern','20th-c. composer','1882–1937','Poland’s luminous, exotic modernist.'],
- ['Nikolai Medtner','modern','Composer & pianist','1880–1951','Russian Romantic-modernist of the “fairy tales”.'],
- ['Alberto Ginastera','modern','20th-c. composer','1916–1983','Argentine rhythm and fire.'],
- ['Heitor Villa-Lobos','modern','20th-c. composer','1887–1959','Brazil’s teeming, colourful voice.'],
- ['Sviatoslav Richter','modern','Concert pianist','1915–1997','Elemental power and vast, unpredictable repertoire.'],
- ['Emil Gilels','modern','Concert pianist','1916–1985','Golden tone and iron command.'],
- ['Art Tatum','jazz','Jazz pianist','1909–1956','Superhuman technique that awed classical masters.'],
- ['Bill Evans','jazz','Jazz pianist','1929–1980','Floating, impressionist harmony — played from the ear.'],
- ['Thelonious Monk','jazz','Jazz pianist','1917–1982','Angular, witty, utterly original architecture.'],
- ['Herbie Hancock','jazz','Jazz pianist','b. 1940','From acoustic bop to electric funk and beyond.'],
- ['Oscar Peterson','jazz','Jazz pianist','1925–2007','Dazzling swing and virtuosity.'],
- ['Duke Ellington','jazz','Bandleader & pianist','1899–1974','The composer-pianist who elevated jazz to art.'],
- ['Bud Powell','jazz','Bebop pianist','1924–1966','Translated Charlie Parker to the keyboard.'],
- ['Chick Corea','jazz','Jazz pianist','1941–2021','Latin fire and fusion invention.'],
- ['Keith Jarrett','jazz','Jazz pianist','b. 1945','Master of the wholly improvised solo concert.'],
- ['McCoy Tyner','jazz','Jazz pianist','1938–2020','Thunderous modal power with the Coltrane quartet.'],
- ['Fats Waller','jazz','Stride pianist','1904–1943','Joyful stride and irrepressible showmanship.'],
- ['Erroll Garner','jazz','Jazz pianist','1921–1977','Orchestral swing and the standard “Misty”.'],
- ['Ahmad Jamal','jazz','Jazz pianist','1930–2023','Space, restraint and groove.'],
- ['Dave Brubeck','jazz','Jazz pianist','1920–2012','Odd metres made irresistible; “Take Five”.'],
- ['Scott Joplin','jazz','Ragtime composer','1868–1917','The King of Ragtime; “Maple Leaf Rag”.'],
- ['George Gershwin','jazz','Composer & pianist','1898–1937','Bridged jazz and the concert hall; Rhapsody in Blue.'],
- ['Count Basie','jazz','Bandleader & pianist','1904–1984','Swing economy — one perfect note at a time.'],
- ['Jelly Roll Morton','jazz','Early-jazz pianist','1890–1941','Self-styled inventor of jazz; New Orleans pioneer.'],
- ['Earl Hines','jazz','Jazz pianist','1903–1983','“Trumpet-style” piano that changed the music.'],
- ['Teddy Wilson','jazz','Swing pianist','1912–1986','Elegant, refined swing with Benny Goodman.'],
- ['Nat King Cole','jazz','Pianist & singer','1919–1965','Peerless trio pianist before the world knew the voice.'],
- ['Mary Lou Williams','jazz','Jazz pianist','1910–1981','Composer-pianist who mentored the bebop generation.'],
- ['George Shearing','jazz','Jazz pianist','1919–2011','The blindfold-cool “Shearing sound”.'],
- ['Horace Silver','jazz','Hard-bop pianist','1928–2014','Funky, soulful hard-bop grooves.'],
- ['Cecil Taylor','jazz','Free-jazz pianist','1929–2018','Percussive free-jazz volcano.'],
- ['Brad Mehldau','jazz','Jazz pianist','b. 1970','Introspective harmony bridging Bach, jazz and pop.'],
- ['Chucho Valdés','jazz','Latin-jazz pianist','b. 1941','Cuban giant of Afro-Latin jazz.'],
- ['Michel Petrucciani','jazz','Jazz pianist','1962–1999','Enormous spirit and lyricism in a fragile body.'],
- ['Hank Jones','jazz','Jazz pianist','1918–2010','Impeccable taste over a seven-decade career.'],
- ['Kenny Barron','jazz','Jazz pianist','b. 1943','Elegance and swing, a musician’s musician.'],
- ['Vince Guaraldi','jazz','Jazz pianist','1928–1976','Warmth and melody; the Peanuts soundtracks.'],
- ['Hiromi Uehara','jazz','Jazz pianist','b. 1979','Explosive Japanese virtuoso of genre-blending fire.'],
- ['Robert Glasper','jazz','Jazz pianist','b. 1978','Where modern jazz meets hip-hop and soul.'],
- ['Diana Krall','jazz','Pianist & singer','b. 1964','Smoky voice over supple, swinging piano.'],
- ['Philip Glass','contemporary','Minimalist composer','b. 1937','Hypnotic minimalist patterns that reshaped modern music.'],
- ['Steve Reich','contemporary','Minimalist composer','b. 1936','Phasing and pulse; a founder of minimalism.'],
- ['Arvo Pärt','contemporary','Contemporary composer','b. 1935','Sacred stillness; the “tintinnabuli” style.'],
- ['John Adams','contemporary','Contemporary composer','b. 1947','Post-minimalist energy and lush American colour.'],
- ['Ludovico Einaudi','contemporary','Neo-classical','b. 1955','The world’s most-streamed living pianist-composer.'],
- ['Nils Frahm','contemporary','Neo-classical','b. 1982','Felt-piano intimacy meets electronics.'],
- ['Max Richter','contemporary','Neo-classical','b. 1966','Cinematic minimalism; “On the Nature of Daylight”.'],
- ['Ólafur Arnalds','contemporary','Neo-classical','b. 1986','Icelandic warmth blending piano and ambient sound.'],
- ['Yann Tiersen','contemporary','Film & ambient','b. 1970','The wistful world of the Amélie soundtrack.'],
- ['Ryuichi Sakamoto','contemporary','Composer & pianist','1952–2023','Pioneer bridging electronic, classical and film.'],
- ['Michael Nyman','contemporary','Film composer','b. 1944','Driving minimalism; the music of The Piano.'],
- ['Yiruma','contemporary','Neo-classical','b. 1978','Korean composer of the beloved “River Flows in You”.'],
- ['George Winston','contemporary','New-age pianist','1949–2023','Gentle, seasonal solo-piano landscapes.'],
- ['Fazıl Say','contemporary','Pianist & composer','b. 1970','Turkish firebrand of piano and composition.'],
- ['Hania Rani','contemporary','Neo-classical','b. 1990','Polish pianist of hushed, luminous textures.'],
- ['Víkingur Ólafsson','contemporary','Concert pianist','b. 1984','Icelandic pianist reimagining Bach and Rameau for today.']
+ ['Johann Sebastian Bach','baroque','Baroque composer','1685–1750','German master of counterpoint and the bedrock of keyboard music.'],
+ ['George Frideric Handel','baroque','Baroque composer','1685–1759','German-British composer of operas, oratorios and keyboard suites.'],
+ ['Domenico Scarlatti','baroque','Baroque composer','1685–1757','Italian composer of 555 daring, inventive harpsichord sonatas.'],
+ ['Jean-Philippe Rameau','baroque','Baroque composer','1683–1764','French composer and influential music theorist of the Baroque.'],
+ ['François Couperin','baroque','Baroque composer','1668–1733','French Baroque master of the harpsichord and its ornaments.'],
+ ['Girolamo Frescobaldi','baroque','Baroque composer','1583–1643','Italian pioneer of expressive early keyboard music.'],
+ ['Dieterich Buxtehude','baroque','Baroque composer','1637–1707','Danish-German organist who deeply influenced the young Bach.'],
+ ['Johann Pachelbel','baroque','Baroque composer','1653–1706','German Baroque composer, famous today for his Canon.'],
+ ['Antonio Soler','baroque','Baroque composer','1729–1783','Spanish composer of brilliant, fiery keyboard sonatas.'],
+ ['Glenn Gould','baroque','Bach interpreter','1932–1982','Canadian pianist celebrated for his singular Bach recordings.'],
+ ['Wolfgang Amadeus Mozart','classical','Classical composer','1756–1791','Austrian genius of concertos and sonatas of perfect clarity.'],
+ ['Joseph Haydn','classical','Classical composer','1732–1809','Austrian shaper of the Classical sonata and symphony.'],
+ ['Ludwig van Beethoven','classical','Classical–Romantic composer','1770–1827','German titan who carried the piano into the Romantic age.'],
+ ['Muzio Clementi','classical','Classical composer','1752–1832','Italian-British composer, pianist and piano builder.'],
+ ['Carl Philipp Emanuel Bach','classical','Classical composer','1714–1788','Son of J. S. Bach and a bridge from Baroque to Classical.'],
+ ['Johann Christian Bach','classical','Classical composer','1735–1782','The "London Bach," an elegant early Classical stylist.'],
+ ['Johann Nepomuk Hummel','classical','Classical composer','1778–1837','Austrian virtuoso and composer, a pupil of Mozart.'],
+ ['Carl Czerny','classical','Composer & pedagogue','1791–1857','Austrian composer of the studies every pianist still plays.'],
+ ['John Field','classical','Nocturne pioneer','1782–1837','Irish pianist who invented the nocturne, later loved by Chopin.'],
+ ['Jan Ladislav Dussek','classical','Classical composer','1760–1812','Bohemian composer and celebrated travelling virtuoso.'],
+ ['Alfred Brendel','classical','Concert pianist','b. 1931','Austrian pianist revered for Beethoven, Schubert and Liszt.'],
+ ['Wilhelm Kempff','classical','Concert pianist','1895–1991','German pianist, a lyrical poet of the Classical repertoire.'],
+ ['Clara Haskil','classical','Concert pianist','1895–1960','Romanian pianist cherished above all for her Mozart.'],
+ ['Mitsuko Uchida','classical','Concert pianist','b. 1948','Japanese-British pianist, a Mozart and Schubert specialist.'],
+ ['András Schiff','classical','Concert pianist','b. 1953','Hungarian-British pianist known for Bach and Beethoven.'],
+ ['Murray Perahia','classical','Concert pianist','b. 1947','American pianist admired across the entire Classical canon.'],
+ ['Rudolf Serkin','classical','Concert pianist','1903–1991','Austrian-American pianist of great seriousness and depth.'],
+ ['Claude Debussy','impressionist','Impressionist composer','1862–1918','French composer who painted with sound, colour and pedal.'],
+ ['Maurice Ravel','impressionist','Impressionist composer','1875–1937','French master of orchestral colour and jewel-like precision.'],
+ ['Erik Satie','impressionist','Impressionist composer','1866–1925','French eccentric of spare, hypnotic piano miniatures.'],
+ ['Federico Mompou','impressionist','Impressionist composer','1893–1987','Catalan composer of intimate, quiet, mystical piano works.'],
+ ['Manuel de Falla','impressionist','Spanish composer','1876–1946','Spanish composer blending folk roots with modern colour.'],
+ ['Frédéric Chopin','romantic','Romantic composer','1810–1849','Polish poet of the piano who wrote almost only for it.'],
+ ['Franz Liszt','romantic','Virtuoso & composer','1811–1886','Hungarian virtuoso who invented the solo piano recital.'],
+ ['Robert Schumann','romantic','Romantic composer','1810–1856','German Romantic of intensely poetic character pieces.'],
+ ['Clara Schumann','romantic','Composer & pianist','1819–1896','German pianist and composer, a leading virtuoso of her age.'],
+ ['Johannes Brahms','romantic','Romantic composer','1833–1897','German master balancing Classical structure and Romantic warmth.'],
+ ['Franz Schubert','romantic','Romantic composer','1797–1828','Austrian composer of songful sonatas and impromptus.'],
+ ['Felix Mendelssohn','romantic','Romantic composer','1809–1847','German Romantic behind the "Songs Without Words."'],
+ ['Pyotr Ilyich Tchaikovsky','romantic','Romantic composer','1840–1893','Russian composer of sweeping, unforgettable melody.'],
+ ['Edvard Grieg','romantic','Romantic composer','1843–1907','Norwegian voice of folk-tinged Romanticism.'],
+ ['Sergei Rachmaninoff','romantic','Composer & pianist','1873–1943','Russian composer-pianist of vast, singing Romantic sweep.'],
+ ['Camille Saint-Saëns','romantic','Romantic composer','1835–1921','French composer and a formidable pianist and organist.'],
+ ['César Franck','romantic','Romantic composer','1822–1890','Belgian-French composer and revered organist.'],
+ ['Anton Rubinstein','romantic','Composer & pianist','1829–1894','Russian virtuoso who founded the St Petersburg Conservatory.'],
+ ['Moritz Moszkowski','romantic','Romantic composer','1854–1925','Polish-German composer of brilliant, charming salon pieces.'],
+ ['Isaac Albéniz','romantic','Spanish composer','1860–1909','Spanish composer of the colourful masterpiece "Iberia."'],
+ ['Enrique Granados','romantic','Spanish composer','1867–1916','Spanish Romantic behind the evocative "Goyescas."'],
+ ['Gabriel Fauré','romantic','Romantic composer','1845–1924','French composer of refined, subtle harmony.'],
+ ['Charles-Valentin Alkan','romantic','Virtuoso composer','1813–1888','French composer of some of the hardest music ever written.'],
+ ['Sigismond Thalberg','romantic','Virtuoso pianist','1812–1871','Swiss virtuoso, Liszt\u2019s great rival on the concert stage.'],
+ ['Leopold Godowsky','romantic','Virtuoso composer','1870–1938','Polish-American composer of dazzling, intricate transcriptions.'],
+ ['Ferruccio Busoni','romantic','Composer & pianist','1866–1924','Italian composer-pianist and far-sighted visionary.'],
+ ['Ignacy Jan Paderewski','romantic','Pianist & statesman','1860–1941','Polish pianist who also became his nation\u2019s statesman.'],
+ ['Vladimir Horowitz','romantic','Virtuoso pianist','1903–1989','Russian-American virtuoso of legendary colour and power.'],
+ ['Arthur Rubinstein','romantic','Concert pianist','1887–1982','Polish-American pianist, a beloved Chopin authority.'],
+ ['Josef Hofmann','romantic','Virtuoso pianist','1876–1957','Polish virtuoso whom fellow pianists held in awe.'],
+ ['Alfred Cortot','romantic','Concert pianist','1877–1962','French pianist and searching Chopin interpreter.'],
+ ['Walter Gieseking','romantic','Concert pianist','1895–1956','German pianist known for luminous Debussy and Ravel.'],
+ ['Dinu Lipatti','romantic','Concert pianist','1917–1950','Romanian pianist of rare purity, lost tragically young.'],
+ ['Wilhelm Backhaus','romantic','Concert pianist','1884–1969','German pianist, a granite-solid Beethoven specialist.'],
+ ['Edwin Fischer','romantic','Concert pianist','1886–1960','Swiss pianist and warm-hearted Bach interpreter.'],
+ ['Myra Hess','romantic','Concert pianist','1890–1965','British pianist beloved for her wartime London concerts.'],
+ ['Martha Argerich','romantic','Virtuoso pianist','b. 1941','Argentine pianist of electrifying spontaneity and fire.'],
+ ['Daniel Barenboim','romantic','Pianist & conductor','b. 1942','Argentine-Israeli pianist and towering conductor.'],
+ ['Maurizio Pollini','romantic','Concert pianist','1942–2024','Italian pianist of pristine control and intellect.'],
+ ['Krystian Zimerman','romantic','Concert pianist','b. 1956','Polish pianist famed for meticulous, searching artistry.'],
+ ['Claudio Arrau','romantic','Concert pianist','1903–1991','Chilean pianist of profound tone and depth.'],
+ ['Emanuel Ax','romantic','Concert pianist','b. 1949','American pianist and generous chamber-music partner.'],
+ ['Van Cliburn','romantic','Concert pianist','1934–2013','American who won the 1958 Tchaikovsky Competition in Moscow.'],
+ ['Vladimir Ashkenazy','romantic','Pianist & conductor','b. 1937','Russian-Icelandic pianist and conductor of huge repertoire.'],
+ ['Radu Lupu','romantic','Concert pianist','1945–2022','Romanian pianist of inward, unforced poetry.'],
+ ['Nelson Freire','romantic','Concert pianist','1944–2021','Brazilian pianist of natural, singing lyricism.'],
+ ['Stephen Hough','romantic','Pianist & composer','b. 1961','British pianist, composer and writer of wide curiosity.'],
+ ['Marc-André Hamelin','romantic','Virtuoso pianist','b. 1961','Canadian virtuoso who makes the impossible sound easy.'],
+ ['Evgeny Kissin','romantic','Virtuoso pianist','b. 1971','Russian pianist and former child prodigy of great intensity.'],
+ ['Grigory Sokolov','romantic','Concert pianist','b. 1950','Russian pianist of monumental focus and concentration.'],
+ ['Hélène Grimaud','romantic','Concert pianist','b. 1969','French pianist known for Brahms and Rachmaninoff.'],
+ ['Lang Lang','romantic','Concert pianist','b. 1982','Chinese pianist and global ambassador for the instrument.'],
+ ['Yuja Wang','romantic','Virtuoso pianist','b. 1987','Chinese virtuoso of astonishing, fearless technique.'],
+ ['Daniil Trifonov','romantic','Virtuoso pianist','b. 1991','Russian pianist-composer, a leading young virtuoso.'],
+ ['Igor Levit','romantic','Concert pianist','b. 1987','Russian-German pianist admired for his Beethoven.'],
+ ['Khatia Buniatishvili','romantic','Concert pianist','b. 1987','Georgian pianist of vivid, dramatic Romanticism.'],
+ ['Seong-Jin Cho','romantic','Concert pianist','b. 1994','South Korean winner of the 2015 Chopin Competition.'],
+ ['Sergei Prokofiev','modern','20th-c. composer','1891–1953','Russian composer of steel-fingered, driving sonatas.'],
+ ['Alexander Scriabin','modern','Composer & pianist','1872–1915','Russian mystic of ecstatic, ever-shifting harmony.'],
+ ['Béla Bartók','modern','Composer & pianist','1881–1945','Hungarian composer-pianist rooted in folk music.'],
+ ['Igor Stravinsky','modern','20th-c. composer','1882–1971','Russian revolutionary who rewired rhythm itself.'],
+ ['Dmitri Shostakovich','modern','20th-c. composer','1906–1975','Soviet composer of biting irony and hidden depth.'],
+ ['Olivier Messiaen','modern','20th-c. composer','1908–1992','French composer of radiant colour and birdsong.'],
+ ['György Ligeti','modern','20th-c. composer','1923–2006','Hungarian composer of hypnotic, mechanical études.'],
+ ['Paul Hindemith','modern','20th-c. composer','1895–1963','German composer and rigorous music theorist.'],
+ ['Arnold Schoenberg','modern','20th-c. composer','1874–1951','Austrian pioneer who broke music free of tonality.'],
+ ['Charles Ives','modern','American composer','1874–1954','American original and fearless early modernist.'],
+ ['Aaron Copland','modern','American composer','1900–1990','American composer of open, plain-spoken sound.'],
+ ['Samuel Barber','modern','American composer','1910–1981','American lyricist of the modern era.'],
+ ['Francis Poulenc','modern','20th-c. composer','1899–1963','French composer of wit, charm and sudden tenderness.'],
+ ['Karol Szymanowski','modern','20th-c. composer','1882–1937','Polish composer of luminous, sensuous textures.'],
+ ['Nikolai Medtner','modern','Composer & pianist','1880–1951','Russian composer-pianist of intricate "fairy tales."'],
+ ['Alberto Ginastera','modern','20th-c. composer','1916–1983','Argentine composer of fierce, dancing rhythm.'],
+ ['Heitor Villa-Lobos','modern','20th-c. composer','1887–1959','Brazilian composer of vast, exuberant imagination.'],
+ ['Sviatoslav Richter','modern','Concert pianist','1915–1997','Russian pianist of towering range and command.'],
+ ['Emil Gilels','modern','Concert pianist','1916–1985','Russian pianist famed for his golden, burnished tone.'],
+ ['Art Tatum','jazz','Jazz pianist','1909–1956','American pianist of near-superhuman technique.'],
+ ['Bill Evans','jazz','Jazz pianist','1929–1980','American pianist of floating, impressionist harmony.'],
+ ['Thelonious Monk','jazz','Jazz pianist','1917–1982','American pianist-composer of angular, witty genius.'],
+ ['Herbie Hancock','jazz','Jazz pianist','b. 1940','American pianist bridging acoustic and electric jazz.'],
+ ['Oscar Peterson','jazz','Jazz pianist','1925–2007','Canadian pianist of dazzling, joyful swing.'],
+ ['Duke Ellington','jazz','Bandleader & pianist','1899–1974','American bandleader, pianist and prolific composer.'],
+ ['Bud Powell','jazz','Bebop pianist','1924–1966','American architect of the modern bebop piano language.'],
+ ['Chick Corea','jazz','Jazz pianist','1941–2021','American pianist of fusion and buoyant Latin jazz.'],
+ ['Keith Jarrett','jazz','Jazz pianist','b. 1945','American master of long-form solo improvisation.'],
+ ['McCoy Tyner','jazz','Jazz pianist','1938–2020','American pianist of the classic John Coltrane quartet.'],
+ ['Fats Waller','jazz','Stride pianist','1904–1943','American stride pianist and irrepressible entertainer.'],
+ ['Erroll Garner','jazz','Jazz pianist','1921–1977','American pianist who wrote the standard "Misty."'],
+ ['Ahmad Jamal','jazz','Jazz pianist','1930–2023','American pianist celebrated for space and restraint.'],
+ ['Dave Brubeck','jazz','Jazz pianist','1920–2012','American pianist behind the classic "Take Five."'],
+ ['Scott Joplin','jazz','Ragtime composer','1868–1917','American "King of Ragtime" and its finest composer.'],
+ ['George Gershwin','jazz','Composer & pianist','1898–1937','American composer of "Rhapsody in Blue."'],
+ ['Count Basie','jazz','Bandleader & pianist','1904–1984','American bandleader and economical, swinging pianist.'],
+ ['Jelly Roll Morton','jazz','Early-jazz pianist','1890–1941','American pioneer who helped shape early jazz.'],
+ ['Earl Hines','jazz','Jazz pianist','1903–1983','American pianist who freed the jazz right hand.'],
+ ['Teddy Wilson','jazz','Swing pianist','1912–1986','American swing pianist of cool elegance.'],
+ ['Nat King Cole','jazz','Pianist & singer','1919–1965','American pianist and beloved velvet-voiced singer.'],
+ ['Mary Lou Williams','jazz','Jazz pianist','1910–1981','American pianist-composer who spanned every jazz era.'],
+ ['George Shearing','jazz','Jazz pianist','1919–2011','British-American pianist of the famous "Shearing sound."'],
+ ['Horace Silver','jazz','Hard-bop pianist','1928–2014','American founder of soulful hard-bop grooves.'],
+ ['Cecil Taylor','jazz','Free-jazz pianist','1929–2018','American pioneer of ferocious free-jazz piano.'],
+ ['Brad Mehldau','jazz','Jazz pianist','b. 1970','American pianist of introspective, contrapuntal invention.'],
+ ['Chucho Valdés','jazz','Latin-jazz pianist','b. 1941','Cuban giant of Afro-Cuban and Latin jazz.'],
+ ['Michel Petrucciani','jazz','Jazz pianist','1962–1999','French pianist of soaring lyricism and courage.'],
+ ['Hank Jones','jazz','Jazz pianist','1918–2010','American pianist of impeccable taste and touch.'],
+ ['Kenny Barron','jazz','Jazz pianist','b. 1943','American pianist and cherished educator.'],
+ ['Vince Guaraldi','jazz','Jazz pianist','1928–1976','American pianist behind the "Peanuts" themes.'],
+ ['Hiromi Uehara','jazz','Jazz pianist','b. 1979','Japanese pianist of explosive energy and range.'],
+ ['Robert Glasper','jazz','Jazz pianist','b. 1978','American pianist blending jazz with hip-hop and soul.'],
+ ['Diana Krall','jazz','Pianist & singer','b. 1964','Canadian jazz pianist and smoky-voiced singer.'],
+ ['Philip Glass','contemporary','Minimalist composer','b. 1937','American minimalist of hypnotic, repeating patterns.'],
+ ['Steve Reich','contemporary','Minimalist composer','b. 1936','American minimalist who built music from phasing loops.'],
+ ['Arvo Pärt','contemporary','Contemporary composer','b. 1935','Estonian composer of luminous, bell-like stillness.'],
+ ['John Adams','contemporary','Contemporary composer','b. 1947','American composer of vivid post-minimalism.'],
+ ['Ludovico Einaudi','contemporary','Neo-classical','b. 1955','Italian composer of gentle, hugely popular piano music.'],
+ ['Nils Frahm','contemporary','Neo-classical','b. 1982','German pianist blending acoustic keys and electronics.'],
+ ['Max Richter','contemporary','Neo-classical','b. 1966','German-British composer of emotive neo-classical works.'],
+ ['Ólafur Arnalds','contemporary','Neo-classical','b. 1986','Icelandic composer of ambient, string-laced piano.'],
+ ['Yann Tiersen','contemporary','Film & ambient','b. 1970','French composer of the beloved "Amélie" score.'],
+ ['Ryuichi Sakamoto','contemporary','Composer & pianist','1952–2023','Japanese composer and pianist of remarkable range.'],
+ ['Michael Nyman','contemporary','Film composer','b. 1944','British composer of the film score "The Piano."'],
+ ['Yiruma','contemporary','Neo-classical','b. 1978','South Korean pianist of "River Flows in You."'],
+ ['George Winston','contemporary','New-age pianist','1949–2023','American pianist of rural, seasonal moods.'],
+ ['Fazıl Say','contemporary','Pianist & composer','b. 1970','Turkish pianist and composer of restless energy.'],
+ ['Hania Rani','contemporary','Neo-classical','b. 1990','Polish pianist and composer of spacious, ambient works.'],
+ ['Víkingur Ólafsson','contemporary','Concert pianist','b. 1984','Icelandic pianist and a contemporary phenomenon.']
 ];
 var piaBuilt=false,piaFilter='all',piaQuery='';
 function eraById(id){for(var i=0;i<ERAS.length;i++){if(ERAS[i].id===id)return ERAS[i];}return ERAS[2];}
-function pget(name){for(var i=0;i<PIANISTS.length;i++){if(PIANISTS[i][0]===name)return PIANISTS[i];}return null;}
-function initials(n){var a=n.trim().split(/\s+/);return ((a[0]&&a[0][0])||'')+((a.length>1&&a[a.length-1][0])||'');}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function initials(n){var w=n.split(/\s+/).filter(Boolean);return ((w[0]?w[0][0]:'')+(w.length>1?w[w.length-1][0]:'')).toUpperCase();}
 function playPhrase(period,btn){var p=PERIODS[period]||PERIODS.romantic,era=eraById(p.voice),m=PHRASE[period]||PHRASE.romantic;loadEra(era.gm);if(btn)btn.classList.add('playing');m.forEach(function(n,i){setTimeout(function(){voice(era,n);if(btn&&i===m.length-1)setTimeout(function(){btn.classList.remove('playing');},280);},i*300);});}
 function renderPiaControls(){
  var c=document.getElementById('pia-controls');if(!c)return;
@@ -762,43 +760,45 @@ function renderPiaList(){
  var items=PIANISTS.filter(function(p){return (piaFilter==='all'||p[1]===piaFilter)&&(!q||p[0].toLowerCase().indexOf(q)>=0);});
  if(items.length===0){wrap.innerHTML='<p class="pia-empty">No one by that name yet.</p>';return;}
  var out='<div class="pia-count">'+items.length+' pianists</div><div class="pia-grid">';
- items.forEach(function(p){var per=PERIODS[p[1]]||PERIODS.romantic,cat=p[2]||per.label;
-  out+='<button class="pia-card" data-name="'+p[0].replace(/"/g,'&quot;')+'" data-period="'+p[1]+'" style="--pc:'+per.color+'"><span class="pc-name">'+p[0]+'</span><span class="pc-era">'+cat+' · '+(p[3]||'')+'</span></button>';});
+ items.forEach(function(p,idx){var per=PERIODS[p[1]]||PERIODS.romantic;
+  out+='<button class="pia-card" data-i="'+PIANISTS.indexOf(p)+'" style="--pc:'+per.color+'"><span class="pc-name">'+p[0]+'</span><span class="pc-era">'+p[2]+(p[3]?' · '+p[3]:'')+'</span></button>';});
  out+='</div>';wrap.innerHTML=out;
- wrap.querySelectorAll('.pia-card').forEach(function(b){b.onclick=function(){showPianist(b.getAttribute('data-name'),b.getAttribute('data-period'));};});
+ wrap.querySelectorAll('.pia-card').forEach(function(b){b.onclick=function(){showPianist(PIANISTS[+b.getAttribute('data-i')]);};});
 }
 function parseYears(t){if(!t)return '';var m=t.match(/\(([^)]*\d{3,4}[^)]*)\)/);if(!m)return '';var ys=m[1].match(/\d{3,4}/g);if(!ys)return '';if(/born|b\.\s/i.test(m[1]))return 'b. '+ys[0];if(ys.length>=2)return ys[0]+'–'+ys[1];return 'b. '+ys[0];}
-function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function loadWiki(title,cb){
- var key='wik3_'+title,cached=store.get(key);
+ var key='wik2_'+title,cached=store.get(key);
  if(cached){try{cb(JSON.parse(cached));return;}catch(e){}}
  var url='https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts%7Cpageimages%7Cdescription&exintro=1&explaintext=1&redirects=1&piprop=thumbnail&pithumbsize=480&titles='+encodeURIComponent(title);
  fetch(url).then(function(r){return r.json();}).then(function(d){
   var pages=d&&d.query&&d.query.pages,pg=null,k;if(pages){for(k in pages){pg=pages[k];break;}}
-  var o={extract:(pg&&pg.extract)||'',img:(pg&&pg.thumbnail&&pg.thumbnail.source)||'',desc:(pg&&pg.description)||'',url:'https://en.wikipedia.org/wiki/'+encodeURIComponent((pg&&pg.title)||title)};
+  var o={extract:(pg&&pg.extract)||'',img:(pg&&pg.thumbnail&&pg.thumbnail.source)||'',url:'https://en.wikipedia.org/wiki/'+encodeURIComponent((pg&&pg.title)||title)};
   try{store.set(key,JSON.stringify(o));}catch(e){}cb(o);
  }).catch(function(){cb(null);});
 }
-function showPianist(name,period){
- var per=PERIODS[period]||PERIODS.romantic,e=pget(name),cat=(e&&e[2])||per.label,yrs=(e&&e[3])||'',blurb=(e&&e[4])||'';
+function showPianist(p){
+ var name=p[0],period=p[1],category=p[2],years=p[3]||'',blurb=p[4]||'';
+ var per=PERIODS[period]||PERIODS.romantic;
  var list=document.getElementById('pia-list'),ctr=document.getElementById('pia-controls'),det=document.getElementById('pia-detail');
  list.classList.add('hidden');ctr.classList.add('hidden');det.classList.remove('hidden');
  det.innerHTML='<button class="pia-back" id="pia-back">← All pianists</button>'
-  +'<div class="pia-hero" style="--pc:'+per.color+'"><div class="ph-img" id="ph-img">'+esc(initials(name))+'</div><div class="ph-txt">'
-  +'<div class="ph-chips"><span class="ph-chip">'+per.label+'</span><span class="ph-chip alt">'+esc(cat)+'</span></div>'
-  +'<h3 class="ph-name">'+esc(name)+'</h3><div class="ph-years" id="ph-years">'+esc(yrs)+'</div></div></div>'
+  +'<div class="pia-hero" style="--pc:'+per.color+'"><div class="ph-img" id="ph-img">'+initials(name)+'</div><div class="ph-txt">'
+  +'<div class="ph-chips"><span class="ph-chip">'+per.label+'</span><span class="ph-chip alt">'+category+'</span></div>'
+  +'<h3 class="ph-name">'+name+'</h3><div class="ph-years" id="ph-years">'+years+'</div></div></div>'
   +'<div class="ph-extract" id="ph-extract"><p>'+esc(blurb)+'</p></div>'
   +'<div class="t-actions"><button class="btn" id="ph-phrase"><span class="play"></span> Play a phrase</button><button class="btn ghost" id="ph-try">Try it by ear →</button></div>'
-  +'<a class="ph-src" id="ph-src" target="_blank" rel="noopener">Read more on Wikipedia →</a>';
+  +'<a class="ph-src" id="ph-src" target="_blank" rel="noopener">Read the full article on Wikipedia →</a>';
  document.getElementById('pia-back').onclick=function(){det.classList.add('hidden');det.innerHTML='';list.classList.remove('hidden');ctr.classList.remove('hidden');window.scrollTo({top:0});};
  document.getElementById('ph-phrase').onclick=function(){playPhrase(period,this);};
  document.getElementById('ph-try').onclick=function(){go('ear');};
+ document.getElementById('ph-src').href='https://en.wikipedia.org/wiki/'+encodeURIComponent(name);
  window.scrollTo({top:0,behavior:'smooth'});
  loadWiki(name,function(o){
   if(!o)return;
-  if(o.img){var im=document.getElementById('ph-img');if(im){im.style.backgroundImage='url('+o.img+')';im.classList.add('has');}}
-  var y=parseYears(o.extract);var ye=document.getElementById('ph-years');if(ye&&y)ye.textContent=y;
   if(o.extract){var ps=o.extract.split(/\n+/).filter(function(x){return x.trim();}).slice(0,6);var ex=document.getElementById('ph-extract');if(ex&&ps.length)ex.innerHTML=ps.map(function(x){return '<p>'+esc(x)+'</p>';}).join('');}
+  if(o.img){var im=document.getElementById('ph-img');if(im){im.style.backgroundImage='url('+o.img+')';im.classList.add('has');}}
+  if(!years){var y=parseYears(o.extract);var ye=document.getElementById('ph-years');if(ye&&y)ye.textContent=y;}
+  var src=document.getElementById('ph-src');if(src&&o.url)src.href=o.url;
  });
 }
 function ensurePianists(){if(piaBuilt)return;piaBuilt=true;renderPiaControls();renderPiaList();}
